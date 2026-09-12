@@ -42,12 +42,12 @@ export function RevealPhrase() {
   return (
     <section
       ref={ref}
-      className="shell flex min-h-[70vh] items-center py-24 sm:min-h-[85vh] sm:py-32"
+      className="shell flex min-h-[75vh] items-center py-28 sm:min-h-[90vh] sm:py-36"
     >
       {/* Flux de texte normal (et non flex + gap) : les espaces entre
           les mots sont de vrais espaces — la phrase se copie et se lit
           correctement à la synthèse vocale. */}
-      <p className="mx-auto max-w-[19ch] text-center font-display text-[clamp(2rem,5.4vw,3.9rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-ink">
+      <p className="mx-auto max-w-[17ch] text-center font-display text-[clamp(2.5rem,7vw,5.4rem)] font-extrabold leading-[1.04] tracking-[-0.035em] text-ink">
         {WORDS.map((word, index) => (
           <Fragment key={`${word}-${index}`}>
             {prefersReducedMotion ? (

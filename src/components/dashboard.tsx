@@ -133,7 +133,7 @@ const STATS: Stat[] = [
   {
     label: "Temps gagné/semaine",
     Icon: IconClock,
-    target: -12,
+    target: 12,
     format: (value) => `${frNumber(value)}h`,
     footer: (
       <span className="mt-3 inline-block text-[0.69rem] leading-snug text-muted">
@@ -143,14 +143,27 @@ const STATS: Stat[] = [
   },
 ];
 
-function StatCard({ stat, active }: { stat: Stat; active: boolean }) {
+function StatCard({
+  stat,
+  active,
+  index,
+}: {
+  stat: Stat;
+  active: boolean;
+  index: number;
+}) {
   const value = useCountUp(stat.target, active);
 
   return (
-    <div className="rounded-card border border-line bg-panel/45 p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={active ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.5, delay: 0.08 * index, ease: [0.22, 1, 0.36, 1] }}
+      className="group rounded-card border border-line bg-panel/45 p-4 transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-brass/45 hover:bg-panel/70"
+    >
       <div className="flex items-start justify-between gap-3">
         <span className="text-[0.78rem] leading-snug text-muted">{stat.label}</span>
-        <span className="grid size-7 shrink-0 place-items-center rounded-[6px] border border-line bg-page text-forest">
+        <span className="grid size-7 shrink-0 place-items-center rounded-[6px] border border-line bg-page text-forest transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
           <stat.Icon className="size-[15px]" />
         </span>
       </div>
@@ -158,7 +171,7 @@ function StatCard({ stat, active }: { stat: Stat; active: boolean }) {
         {stat.format(value)}
       </div>
       {stat.footer}
-    </div>
+    </motion.div>
   );
 }
 
@@ -292,11 +305,15 @@ function ChartPanel() {
             <motion.span
               key={`dot-${series.id}`}
               style={{ left: `${peak.x}%`, top: `${peak.y}%` }}
-              className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-page bg-forest"
+              className="absolute grid size-2.5 -translate-x-1/2 -translate-y-1/2 place-items-center"
               initial={{ opacity: shouldAnimate ? 0 : 1, scale: shouldAnimate ? 0.4 : 1 }}
               animate={isInView ? { opacity: 1, scale: 1 } : undefined}
               transition={{ duration: 0.35, delay: shouldAnimate ? 1.3 : 0 }}
-            />
+            >
+              {/* Halo qui respire : le pic garde l'œil après le tracé. */}
+              <span className="pulse-ring absolute size-2.5 rounded-full bg-forest" />
+              <span className="size-2.5 rounded-full border-2 border-page bg-forest" />
+            </motion.span>
             <motion.span
               key={`tip-${series.id}`}
               style={{ left: `${peak.x}%`, top: `${peak.y}%` }}
@@ -342,23 +359,37 @@ const TRAFFIC = [
   { label: "Réseaux sociaux", share: 17, color: "#8C9488" },
 ];
 
-function TrafficChips() {
+/**
+ * Chips de sources — entrée décalée, puis micro-interaction au survol :
+ * la part se remplit, la puce grossit, la pastille se détache. Les
+ * chips restent des `span` : rien n'est cliquable dans une maquette.
+ */
+function TrafficChips({ active }: { active: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="mr-1 text-[0.72rem] text-muted">Sources</span>
-      {TRAFFIC.map((source) => (
-        <span
+      {TRAFFIC.map((source, index) => (
+        <motion.span
           key={source.label}
-          className="inline-flex items-center gap-2 rounded-pill border border-line bg-page px-3 py-1.5 text-[0.74rem]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={active ? { opacity: 1, y: 0 } : undefined}
+          transition={{ duration: 0.45, delay: 0.12 * index, ease: [0.22, 1, 0.36, 1] }}
+          className="group relative inline-flex cursor-default items-center gap-2 overflow-hidden rounded-pill border border-line bg-page px-3 py-1.5 text-[0.74rem] transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-brass/50 hover:shadow-[0_4px_14px_-8px_rgba(20,23,26,0.35)]"
         >
+          {/* Part de trafic révélée au survol, derrière le libellé */}
           <span
             aria-hidden="true"
-            className="size-1.5 shrink-0 rounded-full"
+            style={{ width: `${source.share}%`, backgroundColor: source.color }}
+            className="absolute inset-y-0 left-0 origin-left scale-x-0 opacity-10 transition-transform duration-500 ease-out group-hover:scale-x-100"
+          />
+          <span
+            aria-hidden="true"
+            className="relative size-1.5 shrink-0 rounded-full transition-transform duration-300 group-hover:scale-[1.6]"
             style={{ backgroundColor: source.color }}
           />
-          <span className="text-ink">{source.label}</span>
-          <span className="tnum text-muted">{source.share} %</span>
-        </span>
+          <span className="relative text-ink">{source.label}</span>
+          <span className="tnum relative text-muted">{source.share} %</span>
+        </motion.span>
       ))}
     </div>
   );
@@ -392,6 +423,13 @@ export function DashboardShowcase() {
             className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(169,121,61,0.38),transparent)]"
           />
 
+          {/* Brillance qui balaie la carte une fois, au chargement : le
+              dashboard accroche l'œil avant même d'être atteint au scroll. */}
+          <span
+            aria-hidden="true"
+            className="sheen pointer-events-none z-20"
+          />
+
           <BrowserChrome />
 
           <div className="flex">
@@ -409,7 +447,16 @@ export function DashboardShowcase() {
                   </p>
                 </div>
                 <div aria-hidden="true" className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-pill border border-line px-3 py-1.5 text-[0.72rem] text-muted">
+                  {/* Témoin « en direct » : le seul mouvement continu de
+                      la carte, assez discret pour ne pas fatiguer. */}
+                  <span className="inline-flex items-center gap-2 rounded-pill border border-line px-3 py-1.5 text-[0.72rem] text-muted">
+                    <span className="relative grid size-1.5 place-items-center">
+                      <span className="pulse-ring absolute size-1.5 rounded-full bg-forest" />
+                      <span className="size-1.5 rounded-full bg-forest" />
+                    </span>
+                    En direct
+                  </span>
+                  <span className="hidden items-center gap-1.5 rounded-pill border border-line px-3 py-1.5 text-[0.72rem] text-muted sm:inline-flex">
                     <IconCalendar className="size-3.5" />
                     {SITE.demoDate}
                   </span>
@@ -424,8 +471,13 @@ export function DashboardShowcase() {
                 ref={statsRef}
                 className="grid gap-3 px-4 py-4 sm:grid-cols-3 sm:px-5 sm:py-5"
               >
-                {STATS.map((stat) => (
-                  <StatCard key={stat.label} stat={stat} active={statsInView} />
+                {STATS.map((stat, index) => (
+                  <StatCard
+                    key={stat.label}
+                    stat={stat}
+                    active={statsInView}
+                    index={index}
+                  />
                 ))}
               </div>
 
@@ -434,7 +486,7 @@ export function DashboardShowcase() {
               </div>
 
               <div className="px-4 py-5 sm:px-5">
-                <TrafficChips />
+                <TrafficChips active={statsInView} />
               </div>
             </div>
           </div>

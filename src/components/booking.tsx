@@ -65,7 +65,7 @@ export function Booking() {
       <div className="grid gap-6 lg:grid-cols-12 lg:items-stretch">
         <div className="lg:col-span-5">
           <div className="flex h-full flex-col rounded-card border border-line bg-panel/45 p-6 sm:p-8">
-            <h2 className="text-balance font-display text-[clamp(1.8rem,3.4vw,2.5rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-ink">
+            <h2 className="text-balance font-display text-[clamp(1.8rem,3.4vw,2.5rem)] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink">
               Réserver un appel démo
             </h2>
             <p className="mt-4 text-[0.98rem] leading-relaxed text-muted">

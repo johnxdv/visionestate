@@ -24,7 +24,6 @@ export const SITE = {
 export const NAV_LINKS = [
   { id: "pourquoi", label: "Pourquoi" },
   { id: "systeme", label: "Le système" },
-  { id: "en-action", label: "En action" },
   { id: "a-propos", label: "À propos" },
 ] as const;
 
@@ -61,12 +60,35 @@ export const FOUNDERS: Founder[] = [
 ];
 
 /* -------------------------------------------------------------- *
- * Sources de données du moteur d'estimation.
- * La crédibilité vient de la méthode, pas d'un chiffre de clients.
+ * Facteurs pris en compte par le moteur d'estimation.
+ * La crédibilité vient de l'étendue de la méthode, pas d'un chiffre
+ * de clients. Répartis en deux bandes défilantes de sens opposés.
  * -------------------------------------------------------------- */
-export const DATA_SOURCES = [
-  { name: "DVF", detail: "Demandes de valeurs foncières" },
-  { name: "data.gouv.fr", detail: "Plateforme ouverte des données publiques" },
-  { name: "BD TOPO®", detail: "IGN — description du territoire" },
-  { name: "BAN", detail: "Base Adresse Nationale" },
-] as const;
+export const ENGINE_FACTORS: readonly [readonly string[], readonly string[]] = [
+  [
+    "DVF",
+    "BDNB (base nationale des bâtiments)",
+    "IGN (carte officielle Géoportail)",
+    "Qualité de l’air",
+    "Pollution sonore",
+    "Risque sismique",
+    "Risque d’inondation",
+    "Risque incendie",
+    "Risque de mouvement de terrain",
+    "Qualité du sol",
+    "Proximité commerces / écoles / transports",
+  ],
+  [
+    "Proximité mer / espaces verts",
+    "Attractivité du quartier",
+    "Sécurité du quartier",
+    "Évolution démographique",
+    "Offre et demande immobilière",
+    "Historique des prix",
+    "Projets urbains à venir",
+    "Potentiel de construction / extension",
+    "Fiscalité locale",
+    "Nuisances (route, train, aéroport, industrie)",
+    "Potentiel de plus-value à moyen/long terme",
+  ],
+];

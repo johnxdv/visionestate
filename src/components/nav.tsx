@@ -22,16 +22,18 @@ export function Nav() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter] duration-300",
+        // Verre franc : le fond reste largement transparent, c'est le
+        // flou et la saturation qui détachent la barre du contenu.
         isScrolled || isMenuOpen
-          ? "border-line bg-[rgba(250,250,248,0.92)] backdrop-blur-[8px]"
+          ? "border-line/70 bg-[rgba(250,250,248,0.55)] backdrop-blur-[16px] backdrop-saturate-[1.4]"
           : "border-transparent bg-transparent",
       )}
     >
       <nav className="shell flex h-[72px] items-center justify-between gap-4">
         <Logo />
 
-        {/* Liens d'ancre dans un conteneur pill discret */}
-        <ul className="hidden items-center gap-1 rounded-pill border border-line/70 bg-page/40 p-1 lg:flex">
+        {/* Texte nu : l'état actif se lit à la couleur et au filet. */}
+        <ul className="hidden items-center gap-7 lg:flex">
           {NAV_LINKS.map((link) => {
             const isActive = activeId === link.id;
             return (
@@ -40,18 +42,18 @@ export function Nav() {
                   href={`#${link.id}`}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "relative inline-flex whitespace-nowrap rounded-pill px-3.5 py-1.5 text-sm transition-colors duration-200",
+                    "relative inline-flex whitespace-nowrap py-1 text-sm transition-colors duration-200",
                     isActive ? "text-ink" : "text-muted hover:text-ink",
                   )}
                 >
+                  {link.label}
                   {isActive && (
                     <motion.span
-                      layoutId="nav-active-pill"
-                      className="absolute inset-0 rounded-pill bg-panel"
+                      layoutId="nav-active-underline"
+                      className="absolute -bottom-0.5 left-0 right-0 h-px bg-ink"
                       transition={{ type: "spring", stiffness: 380, damping: 34 }}
                     />
                   )}
-                  <span className="relative">{link.label}</span>
                 </a>
               </li>
             );
@@ -102,18 +104,19 @@ export function Nav() {
                   <a
                     href={`#${link.id}`}
                     onClick={() => setIsMenuOpen(false)}
+                    aria-current={activeId === link.id ? "true" : undefined}
                     className={cn(
-                      "block rounded-card px-3 py-2.5 text-[0.95rem] transition-colors",
+                      "block border-l px-3 py-2.5 text-[0.95rem] transition-colors",
                       activeId === link.id
-                        ? "bg-panel text-ink"
-                        : "text-muted hover:bg-panel/60 hover:text-ink",
+                        ? "border-ink text-ink"
+                        : "border-transparent text-muted hover:text-ink",
                     )}
                   >
                     {link.label}
                   </a>
                 </li>
               ))}
-              <li className="pt-2 sm:hidden">
+              <li className="pt-3 sm:hidden">
                 <CtaPrimary
                   href="#reserver"
                   className="w-full"

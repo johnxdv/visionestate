@@ -12,10 +12,10 @@ npm run lint
 
 | Fichier | Rôle |
 |---|---|
-| `src/app/globals.css` | Design tokens (`@theme`), styles de base, blobs, `prefers-reduced-motion` |
-| `src/app/layout.tsx` | Polices (Space Grotesk / Inter), métadonnées |
+| `src/app/globals.css` | Design tokens (`@theme`), styles de base, blobs, grille de points, bandes défilantes, surligneur du hero, `prefers-reduced-motion` |
+| `src/app/layout.tsx` | Polices (Plus Jakarta Sans / Inter), métadonnées |
 | `src/app/page.tsx` | Composition des sections, dans l'ordre du brief |
-| `src/lib/content.ts` | **Contenu éditable** : nom d'agence de démo, URL Calendly, fondateurs, sources de données |
+| `src/lib/content.ts` | **Contenu éditable** : nom d'agence de démo, URL Calendly, fondateurs, facteurs du moteur |
 | `src/lib/chart.ts` | Données et géométrie du graphique du dashboard |
 | `src/lib/hooks.ts` | `useMediaQuery`, `useActiveSection`, `useCountUp`, `usePrefersReducedMotion` |
 | `src/lib/motion.ts` | Courbe d'attaque et variants partagés |
@@ -48,4 +48,18 @@ Toutes les animations respectent `prefers-reduced-motion` : CSS neutralisé dans
 pilotées au scroll rendent un état final statique.
 
 Le bandeau scrollytelling a deux implémentations distinctes : version cinématique sticky
-à partir de `lg` (1024 px), version empilée sobre en dessous et en mouvement réduit.
+à partir de `lg` (1024 px), version empilée sobre en dessous et en mouvement réduit. Les
+deux partagent le même fil conducteur dessiné au scroll — horizontal en sticky, vertical
+en empilé — et les mêmes mises en scène par étape.
+
+## Typographie
+
+La police d'affichage est **Plus Jakarta Sans** (Google Fonts, self-hostée par
+`next/font`), utilisée en ExtraBold (800) sur tous les titres. C'est la seule des deux
+alternatives libres évoquées au brief à proposer une italique : Sora n'en a pas sur
+Google Fonts, et le système typographique en a besoin — un mot isolé du titre passe en
+gras italique via `<Em>` (`src/components/ui.tsx`), le reste restant en gras droit.
+
+General Sans / Switzer (Pangram Pangram) donnent le même registre de plus près mais
+exigent une licence commerciale : à basculer si elle est acquise, en changeant seulement
+`--font-display` et le chargement dans `layout.tsx`.

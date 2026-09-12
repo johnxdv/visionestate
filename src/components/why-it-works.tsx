@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { IN_VIEW, riseIn } from "@/lib/motion";
-import { Badge } from "./ui";
+import { EASE, IN_VIEW } from "@/lib/motion";
+import { Em } from "./ui";
 import { IconBolt, IconGauge, IconPulse } from "./icons";
 
 const PILLARS = [
@@ -23,23 +23,33 @@ const PILLARS = [
   },
 ];
 
+/** Le pictogramme se pose en tournant, le texte suit. */
+const PILLAR_SEQUENCE = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09 } },
+};
+
+const PILLAR_ICON = {
+  hidden: { opacity: 0, scale: 0.7, rotate: -14 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    rotate: 0,
+    transition: { duration: 0.62, ease: EASE },
+  },
+};
+
+const PILLAR_TEXT = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+};
+
 export function WhyItWorks() {
   return (
     <section id="pourquoi" className="shell scroll-mt-28 py-24 sm:py-32">
-      {/* En-tête asymétrique : titre à gauche, précision à droite */}
-      <div className="grid gap-7 md:grid-cols-[1fr_auto] md:items-end md:gap-12">
-        <div>
-          <Badge>Pourquoi ça marche</Badge>
-          <h2 className="mt-5 max-w-[16ch] text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink">
-            Un système qui travaille pour vous, pas l’inverse
-          </h2>
-        </div>
-        <p className="max-w-[40ch] text-[0.95rem] leading-relaxed text-muted md:text-right">
-          Trois principes tiennent tout l’édifice : capter le flux entrant,
-          le convertir sans friction, et ne jamais s’interrompre. Vous ne
-          gérez que les rendez-vous qui en sortent.
-        </p>
-      </div>
+      <h2 className="max-w-[18ch] text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink">
+        Un système qui travaille <Em>pour vous</Em>, pas l’inverse
+      </h2>
 
       <div className="mt-10 border-t border-line" />
 
@@ -47,21 +57,41 @@ export function WhyItWorks() {
         {PILLARS.map((pillar, index) => (
           <motion.div
             key={pillar.title}
-            variants={riseIn}
+            variants={PILLAR_SEQUENCE}
             initial="hidden"
             whileInView="visible"
             viewport={IN_VIEW}
-            transition={{ delay: index * 0.08 }}
+            transition={{ delayChildren: index * 0.1 }}
+            // `group` : le survol de la colonne entière anime le
+            // pictogramme et fait courir le filet sous le titre.
+            className="group"
           >
-            <span className="grid size-11 place-items-center rounded-[10px] border border-line bg-panel text-forest">
+            <motion.span
+              variants={PILLAR_ICON}
+              className="grid size-11 place-items-center rounded-[10px] border border-line bg-panel text-forest transition-[transform,border-color,background-color,color] duration-300 group-hover:-translate-y-1 group-hover:rotate-[-8deg] group-hover:border-brass/50 group-hover:bg-blob/60 group-hover:text-brass"
+            >
               <pillar.Icon className="size-[21px]" />
-            </span>
-            <h3 className="mt-5 font-display text-[1.12rem] font-semibold tracking-[-0.01em] text-ink">
-              {pillar.title}
-            </h3>
-            <p className="mt-2.5 max-w-[36ch] text-[0.93rem] leading-relaxed text-muted">
+            </motion.span>
+
+            <motion.h3
+              variants={PILLAR_TEXT}
+              className="mt-5 font-display text-[1.12rem] font-extrabold tracking-[-0.015em] text-ink"
+            >
+              <span className="relative inline-block">
+                {pillar.title}
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-brass/70 transition-transform duration-500 ease-out group-hover:scale-x-100"
+                />
+              </span>
+            </motion.h3>
+
+            <motion.p
+              variants={PILLAR_TEXT}
+              className="mt-2.5 max-w-[36ch] text-[0.93rem] leading-relaxed text-muted"
+            >
               {pillar.body}
-            </p>
+            </motion.p>
           </motion.div>
         ))}
       </div>

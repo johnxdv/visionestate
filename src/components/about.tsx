@@ -34,7 +34,7 @@ export function About() {
     <section id="a-propos" className="shell scroll-mt-28 py-24 sm:py-32">
       <div className="max-w-[62ch]">
         <Badge>À propos</Badge>
-        <h2 className="mt-5 text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-ink">
+        <h2 className="mt-5 text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink">
           Trois associés, un seul système
         </h2>
         {/* PLACEHOLDER — remplacer par le texte d'histoire définitif. */}
@@ -86,7 +86,7 @@ export function About() {
 
               <h3
                 className={cn(
-                  "mt-5 font-display font-semibold tracking-[-0.02em] text-ink",
+                  "mt-5 font-display font-extrabold tracking-[-0.025em] text-ink",
                   staging.name,
                 )}
               >
