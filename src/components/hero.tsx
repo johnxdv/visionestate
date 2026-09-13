@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";
-import { usePrefersReducedMotion } from "@/lib/hooks";
+import { usePrefersReducedMotion, useRenderGate } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
 import { cn } from "@/lib/cn";
 import { CtaPrimary, CtaSecondary } from "./ui";
@@ -143,6 +143,17 @@ export function Hero() {
   const [hasEntered, setHasEntered] = useState(false);
   const settled = hasEntered || prefersReducedMotion;
 
+  // Le tracé du marqueur est armé une fois le titre posé *et* le
+  // document en train de peindre. Ce verrou est la correction du
+  // surlignage : l'animation du trait avance sur la timeline du
+  // document, qui ne tourne pas tant que la page n'est pas rendue.
+  // Armée pendant ce gel — page chargée dans un onglet d'arrière-plan,
+  // fenêtre passée au second plan pendant l'entrée du titre — elle
+  // restait épinglée sur sa première keyframe : trait fermé, donc
+  // invisible, et rien au retour sur la page pour l'en sortir. Voir
+  // `useRenderGate`.
+  const drawMarker = useRenderGate(settled);
+
   // Filet de sécurité. `onAnimationComplete` ne se déclenche que si la
   // séquence va jusqu'au bout : une entrée interrompue — onglet masqué
   // pendant le trajet, remontage en cours de route au retour sur la
@@ -201,7 +212,9 @@ export function Hero() {
                   la seule instance animée est la définitive. */}
               {settled ? (
                 <span className="inline-block">
-                  <MarkerHighlight draw>longueur d’avance</MarkerHighlight>
+                  <MarkerHighlight draw={drawMarker}>
+                    longueur d’avance
+                  </MarkerHighlight>
                 </span>
               ) : (
                 <motion.span

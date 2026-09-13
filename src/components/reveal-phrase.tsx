@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform, type MotionValue } from "framer-motion
 import { usePrefersReducedMotion } from "@/lib/hooks";
 
 const PHRASE =
-  "Le système d’acquisition immobilier le plus évolué du marché français";
+  "Le système d’acquisition immobilier le plus évolué du marché européen";
 
 const WORDS = PHRASE.split(" ");
 

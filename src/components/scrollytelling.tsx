@@ -200,7 +200,7 @@ const BEATS: Beat[] = [
     tag: "Être trouvé",
     line: (
       <>
-        D’abord, être là où vos prospects <Em>cherchent déjà</Em>.
+        5 étapes, <Em>efficace</Em>.
       </>
     ),
     layout: "opener",
@@ -208,7 +208,7 @@ const BEATS: Beat[] = [
   {
     key: "seo",
     tag: "SEO",
-    line: "Premier sur les recherches qui déclenchent un mandat.",
+    line: "Devenez numéro 1 sur les moteurs de recherche.",
     support: "Le SEO capte tout le flux entrant, sans interruption.",
     layout: "split-right",
     visual: SerpStage,
@@ -218,7 +218,7 @@ const BEATS: Beat[] = [
     tag: "Convertir",
     line: (
       <>
-        Ensuite, ne plus en perdre <Em>un seul</Em>.
+        Ne perdez plus <Em>un seul mandat</Em>.
       </>
     ),
     layout: "opener",
@@ -667,7 +667,10 @@ function ScrollytellingDesktop() {
   );
 
   return (
-    <div ref={ref} className="relative h-[500vh]">
+    // Hauteur de la piste = course de scroll + les 100vh que la bande
+    // sticky immobilise. La course utile passe de 400vh à ~267vh :
+    // l'enchaînement des cinq temps avance environ 50 % plus vite.
+    <div ref={ref} className="relative h-[367vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
         <AuroraWash progress={smooth} />
         <Specks />

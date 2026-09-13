@@ -2,38 +2,71 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { FOUNDERS } from "@/lib/content";
+import { FOUNDERS, type BioSegment } from "@/lib/content";
 import { IN_VIEW, riseIn } from "@/lib/motion";
 import { cn } from "@/lib/cn";
 import { Badge } from "./ui";
 
 /**
- * Mise en scène éditoriale : trois blocs de tailles et de hauteurs
- * différentes plutôt que trois cartes identiques.
+ * Mise en scène éditoriale : quatre blocs de tailles et de hauteurs
+ * différentes plutôt que quatre cartes identiques.
  *
- * Les portraits sont bornés en largeur (`media`) plutôt que laissés à
- * la largeur de leur colonne : c'est le texte qui porte la section, pas
- * la photo. Les trois blocs tiennent sur une seule rangée, décalés
- * verticalement en escalier — c'est la marge haute qui fait le zigzag,
- * pas un chevauchement de colonnes qui creuserait un vide.
+ * La composition est pensée en deux rangées de deux sur la grille de
+ * douze colonnes, décalées l'une par rapport à l'autre : la première
+ * rangée s'appuie sur le bord gauche, la seconde rentre d'une colonne.
+ * Les marges hautes font l'escalier à l'intérieur de chaque rangée —
+ * c'est ce décalage, et non un chevauchement de colonnes, qui évite la
+ * grille régulière sans creuser de vide.
+ *
+ * Les portraits restent bornés en largeur (`media`) plutôt que laissés
+ * à la largeur de leur colonne : c'est le texte qui porte la section,
+ * pas la photo.
  */
 const STAGING = [
   {
-    wrapper: "lg:col-span-4 lg:col-start-1",
-    media: "aspect-[4/5] max-w-[232px]",
-    name: "text-[1.5rem]",
+    wrapper: "lg:col-span-5 lg:col-start-1",
+    media: "aspect-[4/5] max-w-[236px]",
+    name: "text-[1.45rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-5 lg:mt-16",
-    media: "aspect-square max-w-[208px]",
-    name: "text-[1.3rem]",
+    wrapper: "lg:col-span-4 lg:col-start-7 lg:mt-20",
+    media: "aspect-square max-w-[206px]",
+    name: "text-[1.25rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-9 lg:mt-32",
-    media: "aspect-[3/4] max-w-[220px]",
-    name: "text-[1.4rem]",
+    wrapper: "lg:col-span-4 lg:col-start-2 lg:mt-4",
+    media: "aspect-[3/4] max-w-[222px]",
+    name: "text-[1.35rem]",
+  },
+  {
+    wrapper: "lg:col-span-4 lg:col-start-8 lg:mt-24",
+    media: "aspect-[4/5] max-w-[198px]",
+    name: "text-[1.2rem]",
   },
 ];
+
+/** Segment de biographie : lien externe quand `href` est présent. */
+function Bio({ segments }: { segments: readonly BioSegment[] }) {
+  return (
+    <p className="mt-3 max-w-[34ch] text-[0.92rem] leading-relaxed text-muted">
+      {segments.map((segment, index) =>
+        segment.href ? (
+          <a
+            key={index}
+            href={segment.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink underline decoration-brass/50 underline-offset-[3px] transition-colors hover:text-brass hover:decoration-brass"
+          >
+            {segment.text}
+          </a>
+        ) : (
+          <span key={index}>{segment.text}</span>
+        ),
+      )}
+    </p>
+  );
+}
 
 export function About() {
   return (
@@ -41,13 +74,11 @@ export function About() {
       <div className="max-w-[62ch]">
         <Badge>À propos</Badge>
         <h2 className="mt-5 text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink">
-          Trois associés, un seul système
+          Les fondateurs
         </h2>
-        {/* PLACEHOLDER — remplacer par le texte d'histoire définitif. */}
         <p className="mt-5 text-pretty text-[1.02rem] leading-relaxed text-muted">
-          Vision Estate est né d’un constat simple : les bonnes agences ne
-          perdent pas leurs mandats sur le terrain, elles les perdent en ligne —
-          faute d’être trouvées, puis faute d’un parcours qui transforme.
+          Vision Estate est né d’un constat simple : les agences immobilières
+          ont besoin de se différencier pour pouvoir progresser.
         </p>
       </div>
 
@@ -57,7 +88,7 @@ export function About() {
 
           return (
             <motion.article
-              key={founder.firstName}
+              key={founder.name}
               variants={riseIn}
               initial="hidden"
               whileInView="visible"
@@ -74,10 +105,10 @@ export function About() {
                 {founder.photo ? (
                   <Image
                     src={founder.photo}
-                    alt={`Portrait de ${founder.firstName}`}
+                    alt={`Portrait de ${founder.name}`}
                     fill
                     className="object-cover"
-                    sizes="232px"
+                    sizes="236px"
                   />
                 ) : (
                   /* PLACEHOLDER — emplacement photo, prêt à recevoir /public */
@@ -85,7 +116,7 @@ export function About() {
                     aria-hidden="true"
                     className="grid size-full place-items-center font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-line"
                   >
-                    {founder.firstName.charAt(0)}
+                    {founder.name.charAt(0)}
                   </span>
                 )}
               </div>
@@ -96,12 +127,10 @@ export function About() {
                   staging.name,
                 )}
               >
-                {founder.firstName}
+                {founder.name}
               </h3>
               <p className="mt-1 text-[0.82rem] text-brass">{founder.role}</p>
-              <p className="mt-3 max-w-[34ch] text-[0.92rem] leading-relaxed text-muted">
-                {founder.bio}
-              </p>
+              <Bio segments={founder.bio} />
             </motion.article>
           );
         })}

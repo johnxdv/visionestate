@@ -28,31 +28,62 @@ export const NAV_LINKS = [
 export const NAV_SECTION_IDS = NAV_LINKS.map((l) => l.id);
 
 /* -------------------------------------------------------------- *
- * Fondateurs — placeholders. Remplacer bio / rôle / photo.
+ * Les fondateurs. `bio` est découpé en segments plutôt qu'en une
+ * chaîne : les sociétés citées sont des liens, et un texte brut ne
+ * peut pas les porter. Un segment sans `href` est du texte simple.
  * `photo` : chemin sous /public une fois les visuels fournis.
  * -------------------------------------------------------------- */
+export type BioSegment = {
+  text: string;
+  /** Présent : le segment est un lien externe. */
+  href?: string;
+};
+
 export type Founder = {
-  firstName: string;
+  name: string;
   role: string;
-  bio: string;
+  bio: readonly BioSegment[];
   photo?: string;
 };
 
 export const FOUNDERS: Founder[] = [
   {
-    firstName: "Benjamin",
-    role: "Acquisition & SEO",
-    bio: "Pilote le volet référencement : la position que prennent nos clients sur les recherches qui déclenchent un mandat.",
+    name: "Benjamin Mossé",
+    role: "Fondateur",
+    bio: [
+      { text: "Fondateur de " },
+      { text: "red9.fr", href: "https://red9.fr" },
+      { text: ", " },
+      { text: "exhaustpro.fr", href: "https://exhaustpro.fr" },
+      { text: ". Co-fondateur de " },
+      { text: "carvi.fr", href: "https://carvi.fr" },
+      { text: ". Associé aux comptes de " },
+      { text: "tmh-corporation.com", href: "https://tmh-corporation.com" },
+      { text: "." },
+    ],
   },
   {
-    firstName: "Armen",
-    role: "Produit & estimation",
-    bio: "Construit le moteur d’estimation et le croisement des 40+ données qui le rendent précis en deux clics.",
+    name: "Armen Isajanyan",
+    role: "Fondateur",
+    bio: [
+      { text: "Fondateur de " },
+      { text: "maileed.com", href: "https://maileed.com" },
+      { text: "." },
+    ],
   },
   {
-    firstName: "Victor",
-    role: "Conversion & funnel",
-    bio: "Dessine le tunnel : chaque écran est pensé pour transformer un visiteur en rendez-vous signé.",
+    name: "Victor Nizet",
+    role: "Consultant",
+    bio: [
+      { text: "Fondateur de " },
+      { text: "carvi.fr", href: "https://carvi.fr" },
+      { text: "." },
+    ],
+  },
+  {
+    name: "Lucas Bella",
+    role: "Directeur d’agence",
+    bio: [{ text: "immo-via.com", href: "https://immo-via.com" }],
   },
 ];
 

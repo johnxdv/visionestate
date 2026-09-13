@@ -651,7 +651,7 @@ export function WhyItWorks() {
   return (
     <section id="pourquoi" className="shell scroll-mt-28 py-24 sm:py-32">
       <h2 className="max-w-[18ch] text-balance font-display text-[clamp(1.9rem,3.8vw,2.9rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink">
-        Un système qui travaille <Em>pour vous</Em>, pas l’inverse
+        Un système qui travaille <Em>pour vous</Em>
       </h2>
 
       <div className="mt-10 border-t border-line" />

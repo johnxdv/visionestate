@@ -309,15 +309,22 @@
  * - `.marker-stroke.marker-draw` — React a armé le tracé, une seule
  *   fois, au moment où le titre s'est posé.
  *
- * Cette séparation est la correction du bug : l'animation portait
- * auparavant un `animation-delay` de 0,62 s et un `fill: both`, posés
- * dès le montage. Or le `fill` arrière applique la première keyframe
- * pendant tout le délai — et si le timeline du document n'avance pas à
- * ce moment-là (onglet ouvert en arrière-plan, page restaurée dans un
- * onglet masqué, retour arrière sur un onglet non visible), il n'avance
- * jamais : le trait restait épinglé sur `inset(0 100% 0 0)`, donc
- * invisible, sans que rien ne vienne l'en sortir. Sans délai et sans
- * montage prématuré, il n'y a plus de fenêtre où s'épingler.
+ * Cause du bug, et sa correction en trois temps. La timeline du
+ * document ne tourne pas tant que la page est masquée (onglet
+ * d'arrière-plan, page restaurée dans un onglet masqué, fenêtre passée
+ * au second plan pendant le chargement). Une animation armée pendant ce
+ * gel voit son `startTime` se résoudre mais son `currentTime` rester à
+ * 0 : elle est « running », épinglée sur sa première keyframe, et le
+ * retour sur la page ne la débloque pas. Avec `inset(0 100% 0 0)` en
+ * première keyframe, le trait ne se montrait donc jamais.
+ *
+ * 1. Ni `animation-delay` ni montage prématuré : la fenêtre d'épinglage
+ *    est réduite à la seule durée du geste (corrections précédentes).
+ * 2. L'armement attend une frame réellement peinte (`useRenderGate`) :
+ *    l'animation n'est plus créée pendant le gel de la timeline.
+ * 3. L'état de repos de l'état armé est le trait *posé*, et l'animation
+ *    ne remplit rien hors de son intervalle : même épinglée, elle ne
+ *    peut laisser derrière elle qu'un trait visible.
  * ------------------------------------------------------------------ */
 @keyframes marker-draw {
   from {
@@ -332,8 +339,15 @@
   clip-path: inset(0 100% 0 0);
 }
 
+/* L'état de repos du tracé armé est le trait *posé*, et l'animation ne
+   remplit rien en dehors de son intervalle (`fill: none`). C'est le
+   filet de sécurité de la timeline : si le geste ne peut pas se jouer,
+   le trait s'affiche entier plutôt que de rester fermé. L'armement est
+   lui-même retenu jusqu'à ce que la page soit visible — voir
+   `useRenderGate` dans src/lib/hooks.ts. */
 .marker-stroke.marker-draw {
-  animation: marker-draw 0.54s cubic-bezier(0.34, 1.46, 0.64, 1) 1 both;
+  clip-path: inset(0 0 0 0);
+  animation: marker-draw 0.54s cubic-bezier(0.34, 1.46, 0.64, 1) 1;
 }
 
 @keyframes marker-glow-in {
@@ -351,8 +365,11 @@
   opacity: 0;
 }
 
+/* Même filet que pour le trait : le halo armé repose sur `opacity: 1`,
+   l'animation ne fait que l'y amener. */
 .marker-halo.marker-glow {
-  animation: marker-glow-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+  opacity: 1;
+  animation: marker-glow-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1;
 }
 
 /* ------------------------------------------------------------------ *
