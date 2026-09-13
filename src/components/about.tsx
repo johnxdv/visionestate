@@ -11,12 +11,10 @@ import { Badge } from "./ui";
  * Mise en scène éditoriale : quatre blocs de tailles et de hauteurs
  * différentes plutôt que quatre cartes identiques.
  *
- * La composition est pensée en deux rangées de deux sur la grille de
- * douze colonnes, décalées l'une par rapport à l'autre : la première
- * rangée s'appuie sur le bord gauche, la seconde rentre d'une colonne.
- * Les marges hautes font l'escalier à l'intérieur de chaque rangée —
- * c'est ce décalage, et non un chevauchement de colonnes, qui évite la
- * grille régulière sans creuser de vide.
+ * En desktop les quatre fondateurs tiennent sur une seule ligne (trois
+ * colonnes chacun sur la grille de douze). Les marges hautes font
+ * l'escalier d'un bloc à l'autre : c'est ce décalage vertical, et non
+ * un changement de rangée, qui évite la grille régulière.
  *
  * Les portraits restent bornés en largeur (`media`) plutôt que laissés
  * à la largeur de leur colonne : c'est le texte qui porte la section,
@@ -24,22 +22,22 @@ import { Badge } from "./ui";
  */
 const STAGING = [
   {
-    wrapper: "lg:col-span-5 lg:col-start-1",
+    wrapper: "lg:col-span-3",
     media: "aspect-[4/5] max-w-[236px]",
     name: "text-[1.45rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-7 lg:mt-20",
+    wrapper: "lg:col-span-3 lg:mt-12",
     media: "aspect-square max-w-[206px]",
     name: "text-[1.25rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-2 lg:mt-4",
+    wrapper: "lg:col-span-3 lg:mt-4",
     media: "aspect-[3/4] max-w-[222px]",
     name: "text-[1.35rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-8 lg:mt-24",
+    wrapper: "lg:col-span-3 lg:mt-16",
     media: "aspect-[4/5] max-w-[198px]",
     name: "text-[1.2rem]",
   },
@@ -49,21 +47,23 @@ const STAGING = [
 function Bio({ segments }: { segments: readonly BioSegment[] }) {
   return (
     <p className="mt-3 max-w-[34ch] text-[0.92rem] leading-relaxed text-muted">
-      {segments.map((segment, index) =>
-        segment.href ? (
-          <a
-            key={index}
-            href={segment.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-ink underline decoration-brass/50 underline-offset-[3px] transition-colors hover:text-brass hover:decoration-brass"
-          >
-            {segment.text}
-          </a>
-        ) : (
-          <span key={index}>{segment.text}</span>
-        ),
-      )}
+      {segments.map((segment, index) => (
+        <span key={index}>
+          {segment.br ? <br /> : null}
+          {segment.href ? (
+            <a
+              href={segment.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink underline decoration-brass/50 underline-offset-[3px] transition-colors hover:text-brass hover:decoration-brass"
+            >
+              {segment.text}
+            </a>
+          ) : (
+            segment.text
+          )}
+        </span>
+      ))}
     </p>
   );
 }

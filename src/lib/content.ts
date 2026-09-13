@@ -37,6 +37,8 @@ export type BioSegment = {
   text: string;
   /** Présent : le segment est un lien externe. */
   href?: string;
+  /** Le segment ouvre une nouvelle ligne dans la bio. */
+  br?: boolean;
 };
 
 export type Founder = {
@@ -53,13 +55,11 @@ export const FOUNDERS: Founder[] = [
     bio: [
       { text: "Fondateur de " },
       { text: "red9.fr", href: "https://red9.fr" },
-      { text: ", " },
-      { text: "exhaustpro.fr", href: "https://exhaustpro.fr" },
-      { text: ". Co-fondateur de " },
+      { text: "exhaustpro.fr", href: "https://exhaustpro.fr", br: true },
+      { text: "Co-fondateur de ", br: true },
       { text: "carvi.fr", href: "https://carvi.fr" },
-      { text: ". Associé aux comptes de " },
+      { text: "Associé aux comptes de ", br: true },
       { text: "tmh-corporation.com", href: "https://tmh-corporation.com" },
-      { text: "." },
     ],
   },
   {
@@ -82,8 +82,11 @@ export const FOUNDERS: Founder[] = [
   },
   {
     name: "Lucas Bella",
-    role: "Directeur d’agence",
-    bio: [{ text: "immo-via.com", href: "https://immo-via.com" }],
+    role: "Consultant",
+    bio: [
+      { text: "Directeur d’agence de " },
+      { text: "immo-via.com", href: "https://immo-via.com" },
+    ],
   },
 ];
 

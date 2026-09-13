@@ -3,8 +3,8 @@ import { CtaPrimary } from "./ui";
 import { IconCalendar, IconCheck, IconClock, IconVideo } from "./icons";
 
 const AGENDA = [
-  "On regarde votre position actuelle sur vos recherches clés.",
-  "On vous montre le tunnel et l’estimateur en conditions réelles.",
+  "Nous procédons à un bilan complet de votre situation actuelle.",
+  "On vous montre le funnel et l’estimateur en conditions réelles.",
   "On chiffre ce que le système changerait pour votre agence.",
 ];
 
@@ -66,11 +66,11 @@ export function Booking() {
         <div className="lg:col-span-5">
           <div className="flex h-full flex-col rounded-card border border-line bg-panel/45 p-6 sm:p-8">
             <h2 className="text-balance font-display text-[clamp(1.8rem,3.4vw,2.5rem)] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink">
-              Réserver un appel démo
+              Prêt pour une démonstration ?
             </h2>
             <p className="mt-4 text-[0.98rem] leading-relaxed text-muted">
-              Trente minutes, en visio, pour voir le système tourner sur votre
-              marché plutôt que sur une plaquette.
+              En 30 minutes chrono, comprenez immédiatement notre système
+              révolutionnaire avec une démonstration détaillée.
             </p>
 
             <ul className="mt-7 flex flex-col gap-3">

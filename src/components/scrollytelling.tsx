@@ -226,17 +226,18 @@ const BEATS: Beat[] = [
   {
     key: "tunnel",
     tag: "Le tunnel",
-    line: "Un tunnel révolutionnaire, optimisé psychologiquement.",
+    line: "Un funnel d’estimation révolutionnaire. Optimisé psychologiquement.",
     support:
-      "Chaque écran est dessiné pour faire avancer le prospect — jusqu’au rendez-vous.",
+      "Chaque étape de l’estimateur est pensée pour faire avancer le prospect — jusqu’au rendez-vous.",
     layout: "split-left",
     visual: FunnelStage,
   },
   {
     key: "estimateur",
     tag: "L’estimateur",
-    line: "Au centre : l’estimateur le plus rapide du marché.",
-    support: "40+ données croisées. Une estimation en 30 secondes.",
+    line: "L’estimateur le plus rapide du marché.",
+    support:
+      "Une estimation en 30 secondes, croisant plus de 40 données spécifiques.",
     layout: "split-right",
     visual: EstimateStage,
   },
