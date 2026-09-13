@@ -20,15 +20,6 @@ function Icon({ children, ...props }: IconProps) {
   );
 }
 
-/** Marque Vision Estate : un V dont la branche droite s'élève. */
-export function LogoMark(props: IconProps) {
-  return (
-    <Icon strokeWidth={2.4} {...props}>
-      <path d="M6 7.5 11.5 16.5 19.5 4.5" />
-    </Icon>
-  );
-}
-
 export const IconEye = (p: IconProps) => (
   <Icon {...p}>
     <path d="M2.5 12S6.1 6 12 6s9.5 6 9.5 6-3.6 6-9.5 6-9.5-6-9.5-6Z" />
@@ -198,6 +189,30 @@ export const IconPin = (p: IconProps) => (
   <Icon {...p}>
     <path d="M12 21s6.8-5.4 6.8-10.6a6.8 6.8 0 1 0-13.6 0C5.2 15.6 12 21 12 21Z" />
     <circle cx="12" cy="10.2" r="2.5" />
+  </Icon>
+);
+
+/** Le jour, sur la bande des 24 heures. */
+export const IconSun = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="4.2" />
+    <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6" />
+  </Icon>
+);
+
+/** La nuit — et le système qui continue de tourner. */
+export const IconMoon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M20.4 14.6A8.8 8.8 0 1 1 9.4 3.6a6.9 6.9 0 0 0 11 11Z" />
+  </Icon>
+);
+
+/** Livraison : le colis posé au bout des 72 heures. */
+export const IconPackage = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M20.4 7.6v8.8L12 21l-8.4-4.6V7.6L12 3Z" />
+    <path d="m3.6 7.6 8.4 4.6 8.4-4.6" />
+    <path d="M12 12.2V21" />
   </Icon>
 );
 

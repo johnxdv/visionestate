@@ -6,11 +6,8 @@
 export const SITE = {
   name: "Vision Estate",
   contactEmail: "contact@visionestate.fr",
-  /**
-   * Nom d'agence affiché dans le dashboard de démonstration.
-   * Fictif — la mention sous le dashboard le précise explicitement.
-   */
-  demoAgency: "Agence Bellevue",
+  /** Prénom affiché dans l'accueil du dashboard de démonstration. */
+  demoFirstName: "Thomas",
   /** Date affichée dans la pill du dashboard. */
   demoDate: "12 sept. 2026",
   /**

@@ -1,9 +1,16 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import {
   motion,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -21,7 +28,11 @@ import { Em } from "./ui";
 /** Étape SEO — la page de résultats, l'agence en tête. */
 function SerpStage() {
   const results = [
-    { title: "Agence Bellevue — Estimation en 2 min", url: "agence-bellevue.fr", own: true },
+    {
+      title: "Agence Bellevue — Estimation en 30 secondes",
+      url: "agence-bellevue.fr",
+      own: true,
+    },
     { title: "Estimer son bien à Lyon 6e", url: "portail-immo.fr", own: false },
     { title: "Prix au m² Lyon 6e — 2026", url: "annonces.fr", own: false },
   ];
@@ -61,35 +72,80 @@ function SerpStage() {
   );
 }
 
-/** Étape tunnel — les écrans qui se resserrent jusqu'au rendez-vous. */
-function FunnelStage() {
-  const steps = [
-    { label: "Visiteur", width: "100%" },
-    { label: "Estimation lancée", width: "78%" },
-    { label: "Coordonnées laissées", width: "54%" },
-    { label: "Rendez-vous pris", width: "34%" },
-  ];
+/* ------------------------------------------------------------------ *
+ * Étape tunnel — les paliers qui se resserrent jusqu'au rendez-vous.
+ *
+ * La barre de remplissage porte le rétrécissement, pas la ligne : un
+ * palier étroit ne peut donc plus rogner son propre libellé, quelle que
+ * soit la longueur du texte ou la largeur disponible.
+ * ------------------------------------------------------------------ */
+const FUNNEL_STEPS = [
+  { label: "Visiteur", value: "1 240", share: 100 },
+  { label: "Estimation lancée", value: "870", share: 70 },
+  { label: "Coordonnées laissées", value: "412", share: 33 },
+  { label: "Rendez-vous pris", value: "186", share: 15 },
+];
 
+function FunnelStage() {
   return (
-    <div className="flex w-full max-w-[420px] flex-col gap-2">
-      {steps.map((step, index) => (
-        <div
-          key={step.label}
-          style={{ width: step.width }}
-          className={
-            index === steps.length - 1
-              ? "rounded-card border border-brass/50 bg-blob/60 px-4 py-2.5"
-              : "rounded-card border border-line bg-page/85 px-4 py-2.5"
-          }
-        >
-          <span className="flex items-center gap-2 whitespace-nowrap text-[0.82rem] text-ink">
-            {index === steps.length - 1 && (
-              <IconCheck className="size-3.5 shrink-0 text-brass" />
-            )}
-            {step.label}
-          </span>
-        </div>
-      ))}
+    <div className="w-full max-w-[420px] rounded-card border border-line bg-page/90 p-4 shadow-flat backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[0.8rem] font-medium text-ink">
+          Tunnel — 7 derniers jours
+        </span>
+        <span className="shrink-0 rounded-pill bg-brass/12 px-2 py-0.5 text-[0.65rem] font-medium text-brass">
+          15 % de RDV
+        </span>
+      </div>
+
+      {/* `relative` : c'est le repère de la goutte qui descend les
+          paliers. `overflow-hidden` garantit qu'elle ne sort jamais. */}
+      <ul className="relative mt-3 flex flex-col gap-2 overflow-hidden">
+        {FUNNEL_STEPS.map((step, index) => {
+          const isLast = index === FUNNEL_STEPS.length - 1;
+
+          return (
+            <li
+              key={step.label}
+              className={`relative overflow-hidden rounded-card border px-3 py-2.5 ${
+                isLast ? "border-brass/50" : "border-line"
+              }`}
+            >
+              {/* Remplissage : la largeur dit la part, l'animation dit
+                  que le flux ne s'arrête pas. */}
+              <span
+                aria-hidden="true"
+                className={`funnel-fill absolute inset-y-0 left-0 ${
+                  isLast ? "bg-blob/80" : "bg-panel/70"
+                }`}
+                style={
+                  {
+                    width: `${step.share}%`,
+                    "--fill-delay": `${index * 0.26}s`,
+                  } as CSSProperties
+                }
+              />
+
+              <span className="relative flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2 text-[0.82rem] text-ink">
+                  {isLast && <IconCheck className="size-3.5 shrink-0 text-brass" />}
+                  <span className="truncate">{step.label}</span>
+                </span>
+                <span className="tnum shrink-0 text-[0.75rem] text-muted">
+                  {step.value}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+
+        {/* La goutte : un prospect qui traverse les paliers, en boucle. */}
+        <span
+          aria-hidden="true"
+          className="funnel-drop pointer-events-none absolute left-[7px] top-1 size-1.5 rounded-full bg-brass"
+          style={{ "--drop-travel": "148px" } as CSSProperties}
+        />
+      </ul>
     </div>
   );
 }
@@ -107,7 +163,9 @@ function EstimateStage() {
 
       <div className="mt-3 rounded-card border border-line bg-panel/40 p-4">
         <div className="text-[0.7rem] text-muted">Valeur estimée</div>
-        <div className="tnum mt-1 font-display text-[1.85rem] font-extrabold leading-none tracking-[-0.03em] text-ink">
+        {/* Le glint traverse le chiffre en boucle : la valeur ne se
+            contente pas d'être affichée, elle scintille. */}
+        <div className="tnum glint mt-1 font-display text-[1.85rem] font-extrabold leading-none tracking-[-0.03em] text-ink">
           418 500 €
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
@@ -115,7 +173,7 @@ function EstimateStage() {
             <IconSparkle className="size-3" />
             40+ données croisées
           </span>
-          <span className="tnum text-[0.7rem] text-muted">2 clics · 1,4 s</span>
+          <span className="tnum text-[0.7rem] text-muted">2 clics · 30 secondes</span>
         </div>
       </div>
     </div>
@@ -128,6 +186,8 @@ function EstimateStage() {
  * ------------------------------------------------------------------ */
 type Beat = {
   key: string;
+  /** Repère affiché dans le compteur d'étape. */
+  tag: string;
   line: ReactNode;
   support?: string;
   layout: "opener" | "split-right" | "split-left";
@@ -137,6 +197,7 @@ type Beat = {
 const BEATS: Beat[] = [
   {
     key: "ouverture",
+    tag: "Être trouvé",
     line: (
       <>
         D’abord, être là où vos prospects <Em>cherchent déjà</Em>.
@@ -146,6 +207,7 @@ const BEATS: Beat[] = [
   },
   {
     key: "seo",
+    tag: "SEO",
     line: "Premier sur les recherches qui déclenchent un mandat.",
     support: "Le SEO capte tout le flux entrant, sans interruption.",
     layout: "split-right",
@@ -153,6 +215,7 @@ const BEATS: Beat[] = [
   },
   {
     key: "pivot",
+    tag: "Convertir",
     line: (
       <>
         Ensuite, ne plus en perdre <Em>un seul</Em>.
@@ -162,15 +225,18 @@ const BEATS: Beat[] = [
   },
   {
     key: "tunnel",
-    line: "Un tunnel optimisé psychologiquement, écran après écran.",
-    support: "Chaque étape est dessinée pour faire avancer le prospect.",
+    tag: "Le tunnel",
+    line: "Un tunnel révolutionnaire, optimisé psychologiquement.",
+    support:
+      "Chaque écran est dessiné pour faire avancer le prospect — jusqu’au rendez-vous.",
     layout: "split-left",
     visual: FunnelStage,
   },
   {
     key: "estimateur",
+    tag: "L’estimateur",
     line: "Au centre : l’estimateur le plus rapide du marché.",
-    support: "40+ données croisées. Un résultat en deux clics.",
+    support: "40+ données croisées. Une estimation en 30 secondes.",
     layout: "split-right",
     visual: EstimateStage,
   },
@@ -182,8 +248,124 @@ const HEADLINE =
 const SUPPORT = "max-w-[38ch] text-pretty text-[1rem] leading-relaxed text-muted";
 
 /* ------------------------------------------------------------------ *
+ * Décors continus — ils bougent pendant tout le scroll, pas seulement
+ * aux changements d'étape.
+ * ------------------------------------------------------------------ */
+
+/** Poussières en suspension : le seul mouvement totalement autonome. */
+const SPECKS = [
+  { left: "8%", size: 4, duration: "19s", delay: "0s", drift: "5vw" },
+  { left: "21%", size: 3, duration: "24s", delay: "-6s", drift: "-3vw" },
+  { left: "37%", size: 5, duration: "16s", delay: "-11s", drift: "4vw" },
+  { left: "52%", size: 3, duration: "27s", delay: "-3s", drift: "-5vw" },
+  { left: "68%", size: 4, duration: "21s", delay: "-14s", drift: "3vw" },
+  { left: "81%", size: 3, duration: "18s", delay: "-8s", drift: "-4vw" },
+  { left: "93%", size: 4, duration: "25s", delay: "-17s", drift: "2vw" },
+];
+
+function Specks() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      {SPECKS.map((speck) => (
+        <span
+          key={speck.left}
+          className="speck bottom-0"
+          style={
+            {
+              left: speck.left,
+              width: speck.size,
+              height: speck.size,
+              "--speck-duration": speck.duration,
+              "--speck-delay": speck.delay,
+              "--speck-drift": speck.drift,
+            } as CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Nappe lumineuse pilotée au scroll : elle traverse la bande d'un bord
+ * à l'autre et change de teinte en route. C'est ce qui donne au fond
+ * une progression continue, indépendante des paliers d'étape.
+ */
+function AuroraWash({ progress }: { progress: MotionValue<number> }) {
+  const x = useTransform(progress, [0, 1], ["-24%", "108%"]);
+  const scale = useTransform(progress, [0, 0.5, 1], [0.9, 1.25, 0.95]);
+  const background = useTransform(
+    progress,
+    [0, 0.5, 1],
+    [
+      "radial-gradient(closest-side, rgba(237,228,206,0.85), rgba(237,228,206,0) 74%)",
+      "radial-gradient(closest-side, rgba(169,121,61,0.3), rgba(169,121,61,0) 74%)",
+      "radial-gradient(closest-side, rgba(20,57,42,0.26), rgba(20,57,42,0) 74%)",
+    ],
+  );
+
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ x, scale, background }}
+      className="pointer-events-none absolute left-0 top-[14%] size-[62vh] -translate-x-1/2 rounded-[50%] blur-[60px]"
+    />
+  );
+}
+
+/** Rail de progression + repère d'étape, en haut de la bande. */
+function ProgressRail({
+  progress,
+  beatIndex,
+}: {
+  progress: MotionValue<number>;
+  beatIndex: MotionValue<number>;
+}) {
+  const [label, setLabel] = useState(BEATS[0].tag);
+  const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    const unsubscribe = beatIndex.on("change", (value) => {
+      const index = Math.min(BEATS.length - 1, Math.max(0, Math.round(value)));
+      setLabel(BEATS[index].tag);
+      setStep(index + 1);
+    });
+    return unsubscribe;
+  }, [beatIndex]);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-[13vh] z-10 mx-auto w-full max-w-[1180px] px-8"
+    >
+      <div className="flex items-center gap-4">
+        <span className="tnum shrink-0 font-display text-[0.72rem] font-semibold tracking-[0.18em] text-muted/70">
+          0{step} / 0{BEATS.length}
+        </span>
+        <div className="relative h-px flex-1 bg-line">
+          <motion.span
+            style={{ scaleX: progress }}
+            className="absolute inset-0 origin-left bg-forest"
+          />
+        </div>
+        <motion.span
+          key={label}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: EASE }}
+          className="shrink-0 text-[0.72rem] font-medium uppercase tracking-[0.14em] text-muted"
+        >
+          {label}
+        </motion.span>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Le fil conducteur : une ligne qui traverse la bande et se dessine au
- * rythme du scroll, jalonnée d'un repère par étape.
+ * rythme du scroll, jalonnée d'un repère par étape et suivie par une
+ * comète qui en marque la tête.
  *
  * Le SVG garde ses proportions (`meet`, pas de viewBox étiré) : c'est la
  * condition pour que `pathLength` produise un tracé plein et régulier.
@@ -228,7 +410,46 @@ function ThreadNode({
   );
 }
 
+/**
+ * Comète en tête de tracé. La position est lue sur le path lui-même
+ * (`getPointAtLength`) plutôt que via `offset-path` : le placement est
+ * exact, et il ne dépend d'aucune propriété CSS au support inégal.
+ */
+function ThreadComet({
+  pathRef,
+  progress,
+}: {
+  pathRef: React.RefObject<SVGPathElement | null>;
+  progress: MotionValue<number>;
+}) {
+  const [length, setLength] = useState(0);
+
+  useEffect(() => {
+    if (pathRef.current) setLength(pathRef.current.getTotalLength());
+  }, [pathRef]);
+
+  const pointAt = (p: number, axis: "x" | "y") => {
+    const path = pathRef.current;
+    if (!path || length === 0) return THREAD_NODES[0][axis];
+    const clamped = Math.min(1, Math.max(0, p));
+    return path.getPointAtLength(clamped * length)[axis];
+  };
+
+  const x = useTransform(progress, (p) => pointAt(p, "x"));
+  const y = useTransform(progress, (p) => pointAt(p, "y"));
+
+  return (
+    <motion.g style={{ x, y }}>
+      <circle r={13} fill="var(--color-forest)" opacity={0.14} />
+      <circle r={7} fill="var(--color-forest)" opacity={0.24} />
+      <circle r={3.4} fill="var(--color-forest)" />
+    </motion.g>
+  );
+}
+
 function Thread({ progress }: { progress: MotionValue<number> }) {
+  const pathRef = useRef<SVGPathElement>(null);
+
   return (
     <div
       aria-hidden="true"
@@ -237,6 +458,7 @@ function Thread({ progress }: { progress: MotionValue<number> }) {
       <svg viewBox="0 0 1000 120" className="h-auto w-full overflow-visible">
         {/* Trace fantôme : on devine le chemin restant à parcourir. */}
         <path
+          ref={pathRef}
           d={THREAD_PATH}
           fill="none"
           stroke="var(--color-line)"
@@ -260,6 +482,7 @@ function Thread({ progress }: { progress: MotionValue<number> }) {
             progress={progress}
           />
         ))}
+        <ThreadComet pathRef={pathRef} progress={progress} />
       </svg>
     </div>
   );
@@ -300,6 +523,9 @@ function CinematicBeat({
     return 1;
   };
 
+  /** Avancement à l'intérieur du créneau, de 0 à 1. */
+  const local = (p: number) => Math.min(1, Math.max(0, (p - start) / span));
+
   const opacity = useTransform(progress, phase);
   const y = useTransform(progress, (p) => {
     if (isFirst && p <= start + fade) return 0;
@@ -310,6 +536,17 @@ function CinematicBeat({
     if (p > end - fade) return -SHIFT * (1 - phase(p));
     return 0;
   });
+
+  // Parallaxe interne : pendant toute la traversée du créneau, le texte
+  // et la maquette dérivent à des vitesses différentes. Le plan continue
+  // de vivre entre deux changements d'étape.
+  const textDrift = useTransform(progress, (p) => (0.5 - local(p)) * 26);
+  const visualDrift = useTransform(progress, (p) => (local(p) - 0.5) * 46);
+  const visualTilt = useTransform(progress, (p) => (local(p) - 0.5) * 2.6);
+  const visualZoom = useTransform(progress, (p) => 1 + (0.5 - Math.abs(0.5 - local(p))) * 0.05);
+  // Les respirations gagnent un léger zoom continu : le titre avance
+  // vers le lecteur tout au long de son créneau.
+  const openerZoom = useTransform(progress, (p) => 0.97 + local(p) * 0.06);
 
   // La maquette glisse depuis son propre bord : le diptyque ne se
   // contente pas d'apparaître, il se referme sur le texte.
@@ -326,9 +563,12 @@ function CinematicBeat({
         style={{ opacity, y }}
         className="absolute inset-0 flex flex-col items-center justify-center px-8 pb-[22vh] text-center"
       >
-        <p className={`${HEADLINE} max-w-[24ch] text-[clamp(2.1rem,4.6vw,3.4rem)]`}>
+        <motion.p
+          style={{ scale: openerZoom }}
+          className={`${HEADLINE} max-w-[24ch] text-[clamp(2.1rem,4.6vw,3.4rem)]`}
+        >
           {beat.line}
-        </p>
+        </motion.p>
       </motion.div>
     );
   }
@@ -343,16 +583,21 @@ function CinematicBeat({
           beat.layout === "split-left" ? "lg:[&>*:first-child]:order-2" : ""
         }`}
       >
-        <div className="flex flex-col gap-5">
+        <motion.div style={{ y: textDrift }} className="flex flex-col gap-5">
           <p className={`${HEADLINE} max-w-[20ch] text-[clamp(1.7rem,3.4vw,2.6rem)]`}>
             {beat.line}
           </p>
           {beat.support && <p className={SUPPORT}>{beat.support}</p>}
-        </div>
+        </motion.div>
 
         {Visual && (
           <motion.div
-            style={{ x: visualShift }}
+            style={{
+              x: visualShift,
+              y: visualDrift,
+              rotate: visualTilt,
+              scale: visualZoom,
+            }}
             className={
               beat.layout === "split-left" ? "flex justify-start" : "flex justify-end"
             }
@@ -372,9 +617,28 @@ function ScrollytellingDesktop() {
     offset: ["start start", "end end"],
   });
 
+  // Le fil et la nappe suivent une version lissée du scroll : leur
+  // mouvement continue une fraction de seconde après l'arrêt, ce qui
+  // donne de la matière au geste. Les compositions, elles, restent
+  // pilotées par la valeur brute — leur enchaînement doit rester net.
+  const smooth = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 28,
+    restDelta: 0.0005,
+  });
+
+  const beatIndex = useTransform(
+    scrollYProgress,
+    (p) => p * BEATS.length - 0.5,
+  );
+
   return (
     <div ref={ref} className="relative h-[500vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
+        <AuroraWash progress={smooth} />
+        <Specks />
+        <ProgressRail progress={smooth} beatIndex={beatIndex} />
+
         <div className="relative mx-auto h-full w-full max-w-[1180px]">
           {BEATS.map((beat, index) => (
             <CinematicBeat
@@ -387,7 +651,7 @@ function ScrollytellingDesktop() {
           ))}
         </div>
 
-        <Thread progress={scrollYProgress} />
+        <Thread progress={smooth} />
       </div>
     </div>
   );

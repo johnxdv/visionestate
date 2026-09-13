@@ -31,8 +31,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    /* hauteur de la nav sticky */
-    scroll-padding-top: 96px;
+    /* hauteur de la nav sticky, marge comprise */
+    scroll-padding-top: 104px;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -95,20 +95,27 @@
  * différentes plutôt qu'un aller-retour : le mouvement ne se lit plus
  * comme une translation, et les durées/décalages désaccordés entre les
  * trois masses évitent toute pulsation commune.
+ *
+ * Les distances sont exprimées en vw/vh : chaque masse traverse une
+ * large fraction de l'écran quelle que soit la taille du viewport. Le
+ * conteneur est `fixed inset-0 overflow-hidden` — rien ne déborde.
  * ------------------------------------------------------------------ */
 @keyframes blob-drift-a {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
-  24% {
-    transform: translate3d(40px, -30px, 0) scale(1.08);
+  21% {
+    transform: translate3d(52vw, 24vh, 0) scale(1.18);
   }
-  47% {
-    transform: translate3d(-25px, 45px, 0) scale(0.94);
+  43% {
+    transform: translate3d(16vw, 62vh, 0) scale(0.86);
   }
-  71% {
-    transform: translate3d(15px, -15px, 0) scale(1.12);
+  64% {
+    transform: translate3d(64vw, 46vh, 0) scale(1.1);
+  }
+  84% {
+    transform: translate3d(24vw, 14vh, 0) scale(0.95);
   }
 }
 
@@ -117,14 +124,17 @@
   100% {
     transform: translate3d(0, 0, 0) scale(1.04);
   }
-  22% {
-    transform: translate3d(-34px, 38px, 0) scale(0.93);
+  19% {
+    transform: translate3d(-46vw, 26vh, 0) scale(0.84);
   }
-  53% {
-    transform: translate3d(28px, 22px, 0) scale(1.1);
+  41% {
+    transform: translate3d(-18vw, -34vh, 0) scale(1.16);
   }
-  78% {
-    transform: translate3d(-12px, -34px, 0) scale(0.98);
+  62% {
+    transform: translate3d(-62vw, -12vh, 0) scale(0.92);
+  }
+  83% {
+    transform: translate3d(-28vw, 38vh, 0) scale(1.08);
   }
 }
 
@@ -133,14 +143,17 @@
   100% {
     transform: translate3d(0, 0, 0) scale(0.96);
   }
-  29% {
-    transform: translate3d(30px, 26px, 0) scale(1.11);
+  24% {
+    transform: translate3d(34vw, -42vh, 0) scale(1.2);
   }
-  55% {
-    transform: translate3d(-38px, -18px, 0) scale(1.02);
+  46% {
+    transform: translate3d(-26vw, -18vh, 0) scale(0.88);
   }
-  81% {
-    transform: translate3d(18px, -36px, 0) scale(0.91);
+  69% {
+    transform: translate3d(44vw, -62vh, 0) scale(1.06);
+  }
+  87% {
+    transform: translate3d(-14vw, -30vh, 0) scale(0.94);
   }
 }
 
@@ -152,14 +165,16 @@
   will-change: transform;
 }
 
+/* Les trajets couvrent une large fraction de l'écran : les durées sont
+   allongées en proportion pour que la dérive reste lente à l'œil. */
 .blob-a {
-  animation: blob-drift-a 19s ease-in-out infinite;
+  animation: blob-drift-a 46s ease-in-out infinite;
 }
 .blob-b {
-  animation: blob-drift-b 24s ease-in-out -7s infinite;
+  animation: blob-drift-b 58s ease-in-out -19s infinite;
 }
 .blob-c {
-  animation: blob-drift-c 16s ease-in-out -13s infinite;
+  animation: blob-drift-c 38s ease-in-out -27s infinite;
 }
 
 /* Grille de points — présente à qui la cherche, invisible au premier
@@ -338,6 +353,339 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Hero — vie continue du titre.
+ *
+ * Deux animations superposées : un dégradé sombre qui traverse
+ * lentement le texte (découpé sur les glyphes) et une respiration de
+ * 1,2 %. Toutes les couleurs du dégradé restent des tons foncés : la
+ * lisibilité sur le fond clair ne dépend jamais de la position de
+ * l'animation.
+ *
+ * `background-repeat: repeat` est indispensable — sans lui, les bords
+ * du titre sortiraient de la boîte du dégradé et le texte, en
+ * `color: transparent`, disparaîtrait.
+ *
+ * La classe n'est posée qu'une fois l'animation d'entrée terminée :
+ * `background-clip: text` ne suit pas les descendants transformés, et
+ * les mots montent derrière un volet pendant l'entrée.
+ * ------------------------------------------------------------------ */
+@keyframes title-sheen {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes title-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+/* La respiration est portée par un conteneur, pas par le titre : une
+   transformation sur le <h1> en ferait un contexte d'empilement, et le
+   `-z-10` du surligneur (voir plus bas) n'aurait plus où s'échapper. */
+.hero-title-breathe {
+  animation: title-breathe 9s ease-in-out infinite;
+}
+
+.hero-title-live {
+  /* Tous les arrêts sont des tons profonds : le contraste sur le fond
+     clair ne bouge pas, et la bande ne délave pas le groupe surligné
+     au marqueur, qui est déjà chaud. */
+  background-image: linear-gradient(
+    100deg,
+    var(--color-ink) 0%,
+    var(--color-ink) 36%,
+    var(--color-navy) 44%,
+    #1d4b36 50%,
+    var(--color-navy) 56%,
+    var(--color-ink) 64%,
+    var(--color-ink) 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: repeat;
+}
+
+/* Le découpage sur les glyphes n'est appliqué que là où il est
+   supporté : sans ce garde-fou, `color: transparent` rendrait le titre
+   invisible au lieu de le laisser en ink.
+ *
+ * Conséquence de ce découpage : la couleur des lettres devient le
+ * *fond* du <h1>, peint avant tout descendant positionné. Le trait de
+ * marqueur passerait donc par-dessus les glyphes — d'où le `-z-10`
+ * posé sur le surligneur, qui le renvoie sous le fond du titre. */
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .hero-title-live {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: title-sheen 13s linear infinite;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Dashboard — nappe de vagues vert clair qui dérivent sous le contenu.
+ * Chaque forme part dans une direction différente, sur une durée
+ * propre : la carte respire sans que le mouvement se lise comme un
+ * défilement commun.
+ * ------------------------------------------------------------------ */
+@keyframes wave-drift-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(22%, -18%, 0) scale(1.18);
+  }
+  66% {
+    transform: translate3d(-16%, 14%, 0) scale(0.9);
+  }
+}
+
+@keyframes wave-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  30% {
+    transform: translate3d(-26%, 16%, 0) scale(0.88);
+  }
+  62% {
+    transform: translate3d(18%, 26%, 0) scale(1.2);
+  }
+}
+
+@keyframes wave-drift-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  28% {
+    transform: translate3d(30%, 20%, 0) scale(1.14);
+  }
+  70% {
+    transform: translate3d(-22%, -16%, 0) scale(1);
+  }
+}
+
+/* Les rubans : une onde qui glisse à l'horizontale, sans repli. */
+@keyframes wave-slide {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.ve-wave {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(38px);
+  will-change: transform;
+}
+
+.ve-wave-1 {
+  animation: wave-drift-1 26s ease-in-out infinite;
+}
+.ve-wave-2 {
+  animation: wave-drift-2 33s ease-in-out -11s infinite;
+}
+.ve-wave-3 {
+  animation: wave-drift-3 21s ease-in-out -7s infinite;
+}
+
+.ve-ribbon {
+  width: 200%;
+  will-change: transform;
+  animation: wave-slide var(--ribbon-duration, 30s) linear infinite;
+}
+
+/* ------------------------------------------------------------------ *
+ * Glint — une brillance étroite qui traverse un chiffre en boucle.
+ * Le masque est le texte lui-même : la lumière ne sort jamais des
+ * glyphes.
+ * ------------------------------------------------------------------ */
+@keyframes glint-sweep {
+  0% {
+    background-position: 210% 0;
+  }
+  55%,
+  100% {
+    background-position: -110% 0;
+  }
+}
+
+/* `--glint-base` porte la couleur du chiffre. `currentColor` ne peut
+   pas jouer ce rôle : sous `background-clip: text`, la couleur du texte
+   vaut `transparent` — le dégradé se peindrait donc en transparent sur
+   toute sa longueur, et il ne resterait du chiffre que l'éclat. */
+.glint {
+  --glint-base: var(--color-ink);
+  background-image: linear-gradient(
+    100deg,
+    var(--glint-base) 0%,
+    var(--glint-base) 42%,
+    #8a6a34 47%,
+    #c79c58 50%,
+    #8a6a34 53%,
+    var(--glint-base) 58%,
+    var(--glint-base) 100%
+  );
+  background-size: 220% 100%;
+  background-repeat: repeat;
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .glint {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: glint-sweep 4.6s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Pourquoi ça marche — animations propres à chaque bloc.
+ * ------------------------------------------------------------------ */
+
+/* Bloc 2 : le faisceau qui balaie les 24 heures.
+   Le balayage est un `background-position` : la bande couvre toute la
+   largeur du bloc quelle qu'elle soit, sans dépendre d'une distance
+   exprimée en pixels. */
+@keyframes beam-scan {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+.scan-beam {
+  background-image: linear-gradient(
+    90deg,
+    rgba(31, 138, 95, 0) 40%,
+    rgba(31, 138, 95, 0.1) 46%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(31, 138, 95, 0.1) 54%,
+    rgba(31, 138, 95, 0) 60%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: beam-scan 6.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Bloc 2 : les barres d'activité respirent, décalées les unes des autres. */
+@keyframes bar-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(var(--bar-peak, 1.25));
+  }
+}
+
+.activity-bar {
+  transform-origin: bottom;
+  animation: bar-breathe var(--bar-duration, 3.2s) ease-in-out
+    var(--bar-delay, 0s) infinite;
+}
+
+/* Bloc 3 : l'onde de choc du tampon « Livré ». */
+@keyframes stamp-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.stamp-ripple {
+  animation: stamp-ripple 3s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* ------------------------------------------------------------------ *
+ * Scrollytelling — mouvements continus, indépendants du scroll.
+ * ------------------------------------------------------------------ */
+
+/* Poussières qui montent lentement dans la bande. */
+@keyframes speck-rise {
+  0% {
+    transform: translate3d(0, 18vh, 0);
+    opacity: 0;
+  }
+  12%,
+  80% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate3d(var(--speck-drift, 3vw), -24vh, 0);
+    opacity: 0;
+  }
+}
+
+.speck {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: var(--color-forest);
+  will-change: transform, opacity;
+  animation: speck-rise var(--speck-duration, 16s) linear
+    var(--speck-delay, 0s) infinite;
+}
+
+/* Le tunnel : une goutte qui descend les paliers, en boucle. */
+@keyframes funnel-drop {
+  0% {
+    transform: translateY(-6px) scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(var(--drop-travel, 120px)) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.funnel-drop {
+  animation: funnel-drop 3.4s cubic-bezier(0.55, 0, 0.45, 1) infinite;
+}
+
+/* Remplissage des paliers du tunnel. */
+@keyframes funnel-fill {
+  0%,
+  100% {
+    transform: scaleX(0.2);
+  }
+  45%,
+  70% {
+    transform: scaleX(1);
+  }
+}
+
+.funnel-fill {
+  transform-origin: left;
+  animation: funnel-fill 3.4s cubic-bezier(0.33, 1, 0.68, 1)
+    var(--fill-delay, 0s) infinite;
+}
+
+/* ------------------------------------------------------------------ *
  * prefers-reduced-motion — neutralise animations CSS et scroll doux.
  * Les animations Framer Motion sont gérées par <MotionConfig
  * reducedMotion="user"> et par useReducedMotion() dans les composants
@@ -365,7 +713,29 @@
     transform: none !important;
   }
 
-  .sheen {
+  .sheen,
+  .speck,
+  .scan-beam,
+  .funnel-drop {
     display: none;
+  }
+
+  /* Le dégradé du titre et les glints restent posés (tons foncés,
+     couverture garantie par `background-repeat: repeat`) : c'est le
+     déplacement qui disparaît, pas la couleur. */
+  .hero-title-live,
+  .hero-title-breathe,
+  .glint,
+  .ve-wave,
+  .ve-ribbon,
+  .activity-bar,
+  .funnel-fill,
+  .stamp-ripple {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .stamp-ripple {
+    opacity: 0;
   }
 }

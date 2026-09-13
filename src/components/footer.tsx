@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="border-t border-line">
       <div className="shell flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between">
-        <Logo />
+        <Logo imgClassName="h-[44px] w-auto" />
 
         <nav aria-label="Liens de pied de page">
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[0.85rem] text-muted">

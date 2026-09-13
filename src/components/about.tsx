@@ -10,22 +10,28 @@ import { Badge } from "./ui";
 /**
  * Mise en scène éditoriale : trois blocs de tailles et de hauteurs
  * différentes plutôt que trois cartes identiques.
+ *
+ * Les portraits sont bornés en largeur (`media`) plutôt que laissés à
+ * la largeur de leur colonne : c'est le texte qui porte la section, pas
+ * la photo. Les trois blocs tiennent sur une seule rangée, décalés
+ * verticalement en escalier — c'est la marge haute qui fait le zigzag,
+ * pas un chevauchement de colonnes qui creuserait un vide.
  */
 const STAGING = [
   {
-    wrapper: "lg:col-span-5 lg:col-start-1",
-    media: "aspect-[4/5]",
-    name: "text-[clamp(1.5rem,2.5vw,2.05rem)]",
+    wrapper: "lg:col-span-4 lg:col-start-1",
+    media: "aspect-[4/5] max-w-[232px]",
+    name: "text-[1.5rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-8 lg:mt-24",
-    media: "aspect-square",
-    name: "text-[1.35rem]",
+    wrapper: "lg:col-span-4 lg:col-start-5 lg:mt-16",
+    media: "aspect-square max-w-[208px]",
+    name: "text-[1.3rem]",
   },
   {
-    wrapper: "lg:col-span-4 lg:col-start-3 lg:-mt-10",
-    media: "aspect-[3/4]",
-    name: "text-[1.55rem]",
+    wrapper: "lg:col-span-4 lg:col-start-9 lg:mt-32",
+    media: "aspect-[3/4] max-w-[220px]",
+    name: "text-[1.4rem]",
   },
 ];
 
@@ -45,7 +51,7 @@ export function About() {
         </p>
       </div>
 
-      <div className="mt-16 grid gap-x-6 gap-y-14 lg:grid-cols-12 lg:items-start">
+      <div className="mt-16 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-12 lg:items-start">
         {FOUNDERS.map((founder, index) => {
           const staging = STAGING[index] ?? STAGING[0];
 
@@ -61,7 +67,7 @@ export function About() {
             >
               <div
                 className={cn(
-                  "relative overflow-hidden rounded-card border border-line bg-panel",
+                  "relative w-full overflow-hidden rounded-card border border-line bg-panel",
                   staging.media,
                 )}
               >
@@ -71,13 +77,13 @@ export function About() {
                     alt={`Portrait de ${founder.firstName}`}
                     fill
                     className="object-cover"
-                    sizes="(min-width: 1024px) 40vw, 100vw"
+                    sizes="232px"
                   />
                 ) : (
                   /* PLACEHOLDER — emplacement photo, prêt à recevoir /public */
                   <span
                     aria-hidden="true"
-                    className="grid size-full place-items-center font-display text-[clamp(3rem,7vw,5.5rem)] font-semibold text-line"
+                    className="grid size-full place-items-center font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-line"
                   >
                     {founder.firstName.charAt(0)}
                   </span>
@@ -93,7 +99,7 @@ export function About() {
                 {founder.firstName}
               </h3>
               <p className="mt-1 text-[0.82rem] text-brass">{founder.role}</p>
-              <p className="mt-3 max-w-[38ch] text-[0.92rem] leading-relaxed text-muted">
+              <p className="mt-3 max-w-[34ch] text-[0.92rem] leading-relaxed text-muted">
                 {founder.bio}
               </p>
             </motion.article>

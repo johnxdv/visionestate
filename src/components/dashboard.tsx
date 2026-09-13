@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { SITE } from "@/lib/content";
 import { buildGeometry, frNumber, SERIES } from "@/lib/chart";
@@ -55,14 +55,95 @@ function BrowserChrome() {
 }
 
 /* ------------------------------------------------------------------ *
- * Sidebar — rail d'icônes sur mobile, colonne complète à partir de md.
+ * Palette du produit — élargie au-delà du couple forêt/laiton de la
+ * page. Un dashboard se lit d'abord à ses couleurs : chaque famille
+ * d'objet (métrique, rubrique, source) porte la sienne.
  * ------------------------------------------------------------------ */
-const SIDEBAR_ITEMS = [
-  { label: "Tableau de bord", Icon: IconGrid, active: true },
-  { label: "Leads", Icon: IconUsers, active: false },
-  { label: "Estimations", Icon: IconEstimate, active: false },
-  { label: "Rapports", Icon: IconReport, active: false },
-  { label: "Paramètres", Icon: IconSliders, active: false },
+const ACCENT = {
+  forest: "#14392A",
+  emerald: "#1F8A5F",
+  teal: "#0F7C86",
+  ocean: "#2B5FA8",
+  violet: "#6B4C9A",
+  brass: "#A9793D",
+  clay: "#B4553F",
+} as const;
+
+type Accent = (typeof ACCENT)[keyof typeof ACCENT];
+
+/* ------------------------------------------------------------------ *
+ * Nappe de vagues vert clair — sous le contenu, au-dessus du fond de
+ * la carte. Trois masses floutées qui dérivent chacune dans sa propre
+ * direction, plus deux rubans ondulés qui glissent à l'horizontale à
+ * des vitesses différentes.
+ *
+ * Tout est peint en `absolute inset-0` derrière un contenu passé en
+ * `relative z-10` : l'ordre de peinture est explicite, jamais implicite.
+ * ------------------------------------------------------------------ */
+function WaveField() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+    >
+      <span className="ve-wave ve-wave-1 -left-[8%] top-[6%] h-[46%] w-[38%] bg-[#7FC8A0] opacity-[0.22]" />
+      <span className="ve-wave ve-wave-2 right-[4%] top-[34%] h-[52%] w-[34%] bg-[#5FBF97] opacity-[0.18]" />
+      <span className="ve-wave ve-wave-3 bottom-[-6%] left-[34%] h-[44%] w-[40%] bg-[#A8DCBE] opacity-[0.26]" />
+
+      {/* Rubans : deux ondes qui traversent la carte en sens contraire.
+          Le tracé porte deux périodes complètes sur une largeur double —
+          une translation de -50 % rejoue exactement la même forme. */}
+      <div className="absolute inset-x-0 top-[26%] h-[120px] overflow-hidden">
+        <svg
+          className="ve-ribbon h-full"
+          viewBox="0 0 400 100"
+          preserveAspectRatio="none"
+          style={{ ["--ribbon-duration" as string]: "34s" }}
+        >
+          <path
+            d="M0 50 C 25 14, 75 14, 100 50 C 125 86, 175 86, 200 50 C 225 14, 275 14, 300 50 C 325 86, 375 86, 400 50 L 400 100 L 0 100 Z"
+            fill="#8ED3AE"
+            fillOpacity="0.16"
+          />
+        </svg>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-[8%] h-[140px] overflow-hidden">
+        <svg
+          className="ve-ribbon h-full"
+          viewBox="0 0 400 100"
+          preserveAspectRatio="none"
+          style={{
+            ["--ribbon-duration" as string]: "52s",
+            animationDirection: "reverse",
+          }}
+        >
+          <path
+            d="M0 46 C 30 88, 70 88, 100 46 C 130 4, 170 4, 200 46 C 230 88, 270 88, 300 46 C 330 4, 370 4, 400 46 L 400 100 L 0 100 Z"
+            fill="#6FC79B"
+            fillOpacity="0.13"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Sidebar — rail d'icônes sur mobile, colonne complète à partir de md.
+ * Chaque rubrique porte sa couleur : le rail se lit d'un coup d'œil.
+ * ------------------------------------------------------------------ */
+const SIDEBAR_ITEMS: {
+  label: string;
+  Icon: typeof IconGrid;
+  color: Accent;
+  active: boolean;
+}[] = [
+  { label: "Tableau de bord", Icon: IconGrid, color: ACCENT.forest, active: true },
+  { label: "Leads", Icon: IconUsers, color: ACCENT.ocean, active: false },
+  { label: "Estimations", Icon: IconEstimate, color: ACCENT.brass, active: false },
+  { label: "Rapports", Icon: IconReport, color: ACCENT.violet, active: false },
+  { label: "Paramètres", Icon: IconSliders, color: ACCENT.teal, active: false },
 ];
 
 function Sidebar() {
@@ -72,7 +153,7 @@ function Sidebar() {
       className="w-[60px] shrink-0 border-r border-line p-2 md:w-[186px] md:p-3"
     >
       <ul className="flex flex-col gap-0.5">
-        {SIDEBAR_ITEMS.map(({ label, Icon, active }) => (
+        {SIDEBAR_ITEMS.map(({ label, Icon, color, active }) => (
           <li key={label}>
             <span
               title={label}
@@ -81,7 +162,7 @@ function Sidebar() {
                 active ? "bg-panel font-medium text-ink" : "text-muted",
               )}
             >
-              <Icon className="size-[17px] shrink-0" />
+              <Icon className="size-[17px] shrink-0" style={{ color }} />
               <span className="hidden md:inline">{label}</span>
             </span>
           </li>
@@ -99,11 +180,11 @@ type Stat = {
   Icon: typeof IconEye;
   target: number;
   format: (value: number) => string;
-  footer: ReactNode;
+  /** Accent de la carte : pastille, badge et liseré supérieur. */
+  accent: Accent;
+  badge?: { text: string; trend: boolean };
+  note?: string;
 };
-
-const TREND_BADGE =
-  "mt-3 inline-flex items-center gap-1 rounded-pill bg-forest/10 px-2 py-1 text-[0.69rem] font-medium text-forest";
 
 const STATS: Stat[] = [
   {
@@ -111,35 +192,24 @@ const STATS: Stat[] = [
     Icon: IconEye,
     target: 759,
     format: (value) => `+${frNumber(value)}`,
-    footer: (
-      <span className={TREND_BADGE}>
-        <IconTrendUp className="size-2.5" />
-        +18 % vs mois dernier
-      </span>
-    ),
+    accent: ACCENT.ocean,
+    badge: { text: "+18 % vs mois dernier", trend: true },
   },
   {
     label: "Mandats signés",
     Icon: IconKey,
     target: 40,
     format: (value) => `+${frNumber(value)}`,
-    footer: (
-      <span className={TREND_BADGE}>
-        <IconTrendUp className="size-2.5" />
-        +12 ce mois
-      </span>
-    ),
+    accent: ACCENT.emerald,
+    badge: { text: "+12 ce mois", trend: true },
   },
   {
     label: "Temps gagné/semaine",
     Icon: IconClock,
     target: 12,
     format: (value) => `${frNumber(value)}h`,
-    footer: (
-      <span className="mt-3 inline-block text-[0.69rem] leading-snug text-muted">
-        de tâches manuelles en moins
-      </span>
-    ),
+    accent: ACCENT.violet,
+    note: "de tâches manuelles en moins",
   },
 ];
 
@@ -159,18 +229,45 @@ function StatCard({
       initial={{ opacity: 0, y: 14 }}
       animate={active ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.5, delay: 0.08 * index, ease: [0.22, 1, 0.36, 1] }}
-      className="group rounded-card border border-line bg-panel/45 p-4 transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-brass/45 hover:bg-panel/70"
+      className="group relative overflow-hidden rounded-card border border-line bg-panel/45 p-4 transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-panel/70"
+      style={{ borderTopColor: stat.accent }}
     >
+      {/* Liseré teinté sur l'arête haute : la couleur identifie la
+          métrique avant même qu'on lise son libellé. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[3px]"
+        style={{ backgroundColor: stat.accent }}
+      />
+
       <div className="flex items-start justify-between gap-3">
         <span className="text-[0.78rem] leading-snug text-muted">{stat.label}</span>
-        <span className="grid size-7 shrink-0 place-items-center rounded-[6px] border border-line bg-page text-forest transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+        <span
+          className="grid size-7 shrink-0 place-items-center rounded-[6px] transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"
+          style={{ backgroundColor: `${stat.accent}1a`, color: stat.accent }}
+        >
           <stat.Icon className="size-[15px]" />
         </span>
       </div>
+
       <div className="tnum mt-3 font-display text-[1.75rem] font-semibold leading-none tracking-[-0.025em] text-ink">
         {stat.format(value)}
       </div>
-      {stat.footer}
+
+      {stat.badge && (
+        <span
+          className="mt-3 inline-flex items-center gap-1 rounded-pill px-2 py-1 text-[0.69rem] font-medium"
+          style={{ backgroundColor: `${stat.accent}1f`, color: stat.accent }}
+        >
+          {stat.badge.trend && <IconTrendUp className="size-2.5" />}
+          {stat.badge.text}
+        </span>
+      )}
+      {stat.note && (
+        <span className="mt-3 inline-block text-[0.69rem] leading-snug text-muted">
+          {stat.note}
+        </span>
+      )}
     </motion.div>
   );
 }
@@ -201,7 +298,12 @@ function ChartPanel() {
   return (
     <div ref={ref} className="rounded-card border border-line bg-panel/45 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-[0.95rem] font-semibold text-ink">
+        <h3 className="flex items-center gap-2 font-display text-[0.95rem] font-semibold text-ink">
+          <span
+            aria-hidden="true"
+            className="size-2 rounded-[3px]"
+            style={{ backgroundColor: ACCENT.teal }}
+          />
           Évolution des visiteurs
         </h3>
         <div
@@ -261,8 +363,16 @@ function ChartPanel() {
           >
             <defs>
               <linearGradient id="ve-area-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1B5638" stopOpacity="0.26" />
-                <stop offset="100%" stopColor="#1B5638" stopOpacity="0.05" />
+                <stop offset="0%" stopColor={ACCENT.emerald} stopOpacity="0.34" />
+                <stop offset="55%" stopColor={ACCENT.teal} stopOpacity="0.16" />
+                <stop offset="100%" stopColor={ACCENT.ocean} stopOpacity="0.04" />
+              </linearGradient>
+              {/* La courbe change de teinte sur sa longueur : le trajet
+                  se lit comme une progression, pas comme une ligne. */}
+              <linearGradient id="ve-line-stroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={ACCENT.ocean} />
+                <stop offset="52%" stopColor={ACCENT.teal} />
+                <stop offset="100%" stopColor={ACCENT.emerald} />
               </linearGradient>
               <clipPath id="ve-area-clip">
                 <motion.rect
@@ -291,7 +401,7 @@ function ChartPanel() {
               <path
                 d={geometry.line}
                 fill="none"
-                stroke="#14392A"
+                stroke="url(#ve-line-stroke)"
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -311,18 +421,24 @@ function ChartPanel() {
               transition={{ duration: 0.35, delay: shouldAnimate ? 1.3 : 0 }}
             >
               {/* Halo qui respire : le pic garde l'œil après le tracé. */}
-              <span className="pulse-ring absolute size-2.5 rounded-full bg-forest" />
-              <span className="size-2.5 rounded-full border-2 border-page bg-forest" />
+              <span
+                className="pulse-ring absolute size-2.5 rounded-full"
+                style={{ backgroundColor: ACCENT.emerald }}
+              />
+              <span
+                className="size-2.5 rounded-full border-2 border-page"
+                style={{ backgroundColor: ACCENT.emerald }}
+              />
             </motion.span>
             <motion.span
               key={`tip-${series.id}`}
-              style={{ left: `${peak.x}%`, top: `${peak.y}%` }}
               className={cn(
                 // Le pic est toujours haut dans le cadre : sur mobile le
                 // tooltip passe sous le point, faute de place au-dessus.
-                "tnum absolute translate-y-[12px] whitespace-nowrap rounded-pill bg-forest px-2 py-1 text-[0.62rem] font-medium text-page sm:-translate-y-[calc(100%+16px)] sm:px-2.5 sm:py-1.5 sm:text-[0.66rem]",
+                "tnum absolute translate-y-[12px] whitespace-nowrap rounded-pill px-2 py-1 text-[0.62rem] font-medium text-page sm:-translate-y-[calc(100%+16px)] sm:px-2.5 sm:py-1.5 sm:text-[0.66rem]",
                 tooltipAlign,
               )}
+              style={{ left: `${peak.x}%`, top: `${peak.y}%`, backgroundColor: ACCENT.emerald }}
               initial={{ opacity: shouldAnimate ? 0 : 1, y: shouldAnimate ? 6 : 0 }}
               animate={isInView ? { opacity: 1, y: 0 } : undefined}
               transition={{ duration: 0.4, delay: shouldAnimate ? 1.42 : 0 }}
@@ -354,9 +470,10 @@ function ChartPanel() {
  * Sources de trafic.
  * ------------------------------------------------------------------ */
 const TRAFFIC = [
-  { label: "SEO", share: 62, color: "#14392A" },
-  { label: "Direct", share: 21, color: "#A9793D" },
-  { label: "Réseaux sociaux", share: 17, color: "#8C9488" },
+  { label: "SEO", share: 62, color: ACCENT.emerald },
+  { label: "Direct", share: 21, color: ACCENT.brass },
+  { label: "Réseaux sociaux", share: 12, color: ACCENT.violet },
+  { label: "Parrainage", share: 5, color: ACCENT.clay },
 ];
 
 /**
@@ -417,10 +534,14 @@ export function DashboardShowcase() {
 
       <div className="shell relative z-10">
         <div className="relative overflow-hidden rounded-card border border-line bg-page shadow-flat">
+          {/* Nappe de vagues vert clair — peinte sur le fond de la carte,
+              sous tout le contenu. */}
+          <WaveField />
+
           {/* Filet de lumière sur l'arête haute */}
           <span
             aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(169,121,61,0.38),transparent)]"
+            className="absolute inset-x-0 top-0 z-30 h-px bg-[linear-gradient(90deg,transparent,rgba(169,121,61,0.38),transparent)]"
           />
 
           {/* Brillance qui balaie la carte une fois, au chargement : le
@@ -430,72 +551,92 @@ export function DashboardShowcase() {
             className="sheen pointer-events-none z-20"
           />
 
-          <BrowserChrome />
+          {/* Tout le contenu au-dessus des vagues. Les panneaux internes
+              gardent un fond translucide : la couleur transparaît. */}
+          <div className="relative z-10">
+            <BrowserChrome />
 
-          <div className="flex">
-            <Sidebar />
+            <div className="flex">
+              <Sidebar />
 
-            <div className="min-w-0 flex-1">
-              <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-4 py-4 sm:px-5 sm:py-5">
-                <div>
-                  <h2 className="font-display text-[1rem] font-semibold text-ink sm:text-[1.08rem]">
-                    Bonjour, {SITE.demoAgency} 👋
-                  </h2>
-                  <p className="mt-1 text-[0.8rem] leading-snug text-muted">
-                    Voici ce qui se passe sur votre système d’acquisition
-                    aujourd’hui.
-                  </p>
-                </div>
-                <div aria-hidden="true" className="flex items-center gap-2">
-                  {/* Témoin « en direct » : le seul mouvement continu de
-                      la carte, assez discret pour ne pas fatiguer. */}
-                  <span className="inline-flex items-center gap-2 rounded-pill border border-line px-3 py-1.5 text-[0.72rem] text-muted">
-                    <span className="relative grid size-1.5 place-items-center">
-                      <span className="pulse-ring absolute size-1.5 rounded-full bg-forest" />
-                      <span className="size-1.5 rounded-full bg-forest" />
+              <div className="min-w-0 flex-1">
+                <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-4 py-4 sm:px-5 sm:py-5">
+                  <div>
+                    <h2 className="font-display text-[1rem] font-semibold text-ink sm:text-[1.08rem]">
+                      Bonjour, {SITE.demoFirstName} 👋
+                    </h2>
+                    <p className="mt-1 text-[0.8rem] leading-snug text-muted">
+                      Voici ce qui se passe sur votre système d’acquisition
+                      aujourd’hui.
+                    </p>
+                  </div>
+                  <div aria-hidden="true" className="flex items-center gap-2">
+                      {/* Témoin « en direct » : la pastille bat en
+                        permanence, au rythme des vagues du fond. */}
+                    <span
+                      className="inline-flex items-center gap-2 rounded-pill px-3 py-1.5 text-[0.72rem] font-medium"
+                      style={{
+                        backgroundColor: `${ACCENT.emerald}18`,
+                        color: ACCENT.emerald,
+                      }}
+                    >
+                      <span className="relative grid size-1.5 place-items-center">
+                        <span
+                          className="pulse-ring absolute size-1.5 rounded-full"
+                          style={{ backgroundColor: ACCENT.emerald }}
+                        />
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{ backgroundColor: ACCENT.emerald }}
+                        />
+                      </span>
+                      En direct
                     </span>
-                    En direct
-                  </span>
-                  <span className="hidden items-center gap-1.5 rounded-pill border border-line px-3 py-1.5 text-[0.72rem] text-muted sm:inline-flex">
-                    <IconCalendar className="size-3.5" />
-                    {SITE.demoDate}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-pill bg-forest px-3 py-1.5 text-[0.72rem] font-medium text-page">
-                    <IconExport className="size-3.5" />
-                    Exporter
-                  </span>
+                    <span
+                      className="hidden items-center gap-1.5 rounded-pill px-3 py-1.5 text-[0.72rem] font-medium sm:inline-flex"
+                      style={{
+                        backgroundColor: `${ACCENT.ocean}16`,
+                        color: ACCENT.ocean,
+                      }}
+                    >
+                      <IconCalendar className="size-3.5" />
+                      {SITE.demoDate}
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[0.72rem] font-medium text-page"
+                      style={{ backgroundColor: ACCENT.violet }}
+                    >
+                      <IconExport className="size-3.5" />
+                      Exporter
+                    </span>
+                  </div>
+                </header>
+
+                <div
+                  ref={statsRef}
+                  className="grid gap-3 px-4 py-4 sm:grid-cols-3 sm:px-5 sm:py-5"
+                >
+                  {STATS.map((stat, index) => (
+                    <StatCard
+                      key={stat.label}
+                      stat={stat}
+                      active={statsInView}
+                      index={index}
+                    />
+                  ))}
                 </div>
-              </header>
 
-              <div
-                ref={statsRef}
-                className="grid gap-3 px-4 py-4 sm:grid-cols-3 sm:px-5 sm:py-5"
-              >
-                {STATS.map((stat, index) => (
-                  <StatCard
-                    key={stat.label}
-                    stat={stat}
-                    active={statsInView}
-                    index={index}
-                  />
-                ))}
-              </div>
+                <div className="px-4 sm:px-5">
+                  <ChartPanel />
+                </div>
 
-              <div className="px-4 sm:px-5">
-                <ChartPanel />
-              </div>
-
-              <div className="px-4 py-5 sm:px-5">
-                <TrafficChips active={statsInView} />
+                <div className="px-4 py-5 sm:px-5">
+                  <TrafficChips active={statsInView} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <p className="mt-4 text-center text-[0.72rem] italic text-muted/85">
-          Exemple illustratif basé sur un usage type — pas des données clients
-          réelles.
-        </p>
       </div>
     </div>
   );

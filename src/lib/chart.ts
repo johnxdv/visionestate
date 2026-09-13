@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------ *
  * Données et géométrie du graphique « Évolution des visiteurs ».
  *
- * Données illustratives — cf. la mention affichée sous le dashboard.
+ * Données illustratives.
  * Aucun formatage via Intl au rendu : les libellés et les nombres sont
  * produits de façon déterministe pour éviter tout écart d'hydratation
  * entre le serveur et le navigateur.

@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";
 import { usePrefersReducedMotion } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
+import { cn } from "@/lib/cn";
 import { CtaPrimary, CtaSecondary } from "./ui";
 import { DashboardShowcase } from "./dashboard";
 
@@ -27,19 +28,30 @@ const TITLE_WORD: Variants = {
   },
 };
 
-/** Mot du titre : volet qui découpe, mot qui monte dedans. */
-function Word({ children }: { children: ReactNode }) {
+/**
+ * Mot du titre : volet qui découpe, mot qui monte dedans.
+ *
+ * `settled` retire le `motion.span` une fois l'entrée jouée. C'est la
+ * condition du dégradé animé qui suit : `background-clip: text` ne
+ * découpe pas le texte d'un descendant transformé — il serait peint
+ * dans sa propre couche, hors du masque du titre.
+ */
+function Word({ children, settled }: { children: ReactNode; settled: boolean }) {
   return (
     // Le volet descend sous la ligne de base pour laisser passer les
     // jambages ; la marge négative de même valeur évite que cette réserve
     // ne desserre l'interlignage du titre.
     <span className="-mb-[0.14em] inline-block overflow-hidden pb-[0.14em] align-bottom">
-      <motion.span
-        variants={TITLE_WORD}
-        className="inline-block origin-[0%_100%] will-change-transform"
-      >
-        {children}
-      </motion.span>
+      {settled ? (
+        <span className="inline-block">{children}</span>
+      ) : (
+        <motion.span
+          variants={TITLE_WORD}
+          className="inline-block origin-[0%_100%] will-change-transform"
+        >
+          {children}
+        </motion.span>
+      )}
     </span>
   );
 }
@@ -66,14 +78,18 @@ function MarkerHighlight({ children }: { children: string }) {
           ligne suivante du titre au lieu de rester sur le mot. */}
       <span
         aria-hidden="true"
-        className="marker-glow pointer-events-none absolute -bottom-[1.45em] -left-[0.7em] -right-[0.7em] -top-[0.3em] rounded-[50%] bg-[radial-gradient(closest-side,rgba(169,121,61,0.42),rgba(169,121,61,0.18)_58%,rgba(169,121,61,0)_82%)] blur-[26px]"
+        className="marker-glow pointer-events-none absolute -bottom-[1.45em] -left-[0.7em] -right-[0.7em] -top-[0.3em] -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgba(169,121,61,0.42),rgba(169,121,61,0.18)_58%,rgba(169,121,61,0)_82%)] blur-[26px]"
       />
 
       {/* Trait de marqueur — le débordement latéral vient des inserts
           négatifs du conteneur, inégaux d'un côté à l'autre. */}
       <span
         aria-hidden="true"
-        className="marker-draw pointer-events-none absolute -bottom-[0.08em] -left-[0.34em] -right-[0.46em] -top-[0.1em] -rotate-[1.4deg]"
+        // `-z-10` : une fois le dégradé du titre découpé sur les
+        // glyphes, la couleur des lettres est le fond du <h1> — peint
+        // avant les descendants positionnés. Sans ce recul, le trait
+        // recouvrirait les lettres au lieu de passer dessous.
+        className="marker-draw pointer-events-none absolute -bottom-[0.08em] -left-[0.34em] -right-[0.46em] -top-[0.1em] -z-10 -rotate-[1.4deg]"
       >
         <svg
           viewBox="0 0 200 44"
@@ -97,43 +113,69 @@ function MarkerHighlight({ children }: { children: string }) {
 export function Hero() {
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // Passe à vrai quand le dernier mot du titre s'est posé. Le titre
+  // bascule alors sur un balisage sans transform, seul support possible
+  // du dégradé découpé sur les glyphes.
+  const [hasEntered, setHasEntered] = useState(false);
+  const settled = hasEntered || prefersReducedMotion;
+
   return (
     <section id="top" className="relative pt-[7.5rem] sm:pt-[9rem] md:pt-[10.5rem]">
       <div className="relative z-10 mx-auto w-full max-w-[1280px] px-5 text-center sm:px-8">
-        <motion.h1
-          variants={TITLE_SEQUENCE}
-          initial={prefersReducedMotion ? "visible" : "hidden"}
-          animate="visible"
-          // La borne basse du clamp est dictée par le groupe surligné :
-          // il est insécable (le trait est posé sur une boîte unique), il
-          // doit donc tenir sur une ligne à la largeur mobile la plus
-          // étroite, débordement du marqueur compris.
-          className="text-balance font-display text-[clamp(2.05rem,5.5vw,4.4rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink"
-        >
-          {/* Le titre tient sur deux lignes dès lg ; en dessous il se
-              répartit naturellement. */}
-          <span className="lg:block">
-            <Word>Osez</Word> <Word>prendre</Word> <Word>une</Word>{" "}
-            {/* Pas de volet de découpe ici : il rognerait le trait de
-                marqueur et son halo, qui débordent de la boîte du mot. */}
-            <motion.span
-              variants={{
-                hidden: { y: "24%", opacity: 0 },
-                visible: {
-                  y: "0%",
-                  opacity: 1,
-                  transition: { duration: 0.8, ease: EASE },
-                },
-              }}
-              className="inline-block"
-            >
-              <MarkerHighlight>longueur d’avance</MarkerHighlight>
-            </motion.span>
-          </span>{" "}
-          <span className="lg:block">
-            <Word>sur</Word> <Word>vos</Word> <Word>concurrents</Word>
-          </span>
-        </motion.h1>
+        {/* Le conteneur porte la respiration ; le titre porte le
+            dégradé. Les deux animations ne peuvent pas cohabiter sur le
+            même élément — voir le commentaire dans globals.css. */}
+        <div className={settled ? "hero-title-breathe" : undefined}>
+          <motion.h1
+            variants={TITLE_SEQUENCE}
+            initial={prefersReducedMotion ? "visible" : "hidden"}
+            animate="visible"
+            onAnimationComplete={() => setHasEntered(true)}
+            // La borne basse du clamp est dictée par le groupe surligné :
+            // il est insécable (le trait est posé sur une boîte unique), il
+            // doit donc tenir sur une ligne à la largeur mobile la plus
+            // étroite, débordement du marqueur compris.
+            className={cn(
+              "text-balance font-display text-[clamp(2.05rem,5.5vw,4.4rem)] font-extrabold leading-[1.08] tracking-[-0.035em] text-ink",
+              // Respiration + dégradé qui traverse le texte, en boucle.
+              settled && "hero-title-live",
+            )}
+          >
+            {/* Le titre tient sur deux lignes dès lg ; en dessous il se
+                répartit naturellement. */}
+            <span className="lg:block">
+              <Word settled={settled}>Osez</Word>{" "}
+              <Word settled={settled}>prendre</Word>{" "}
+              <Word settled={settled}>une</Word>{" "}
+              {/* Pas de volet de découpe ici : il rognerait le trait de
+                  marqueur et son halo, qui débordent de la boîte du mot. */}
+              {settled ? (
+                <span className="inline-block">
+                  <MarkerHighlight>longueur d’avance</MarkerHighlight>
+                </span>
+              ) : (
+                <motion.span
+                  variants={{
+                    hidden: { y: "24%", opacity: 0 },
+                    visible: {
+                      y: "0%",
+                      opacity: 1,
+                      transition: { duration: 0.8, ease: EASE },
+                    },
+                  }}
+                  className="inline-block"
+                >
+                  <MarkerHighlight>longueur d’avance</MarkerHighlight>
+                </motion.span>
+              )}
+            </span>{" "}
+            <span className="lg:block">
+              <Word settled={settled}>sur</Word>{" "}
+              <Word settled={settled}>vos</Word>{" "}
+              <Word settled={settled}>concurrents</Word>
+            </span>
+          </motion.h1>
+        </div>
 
         <motion.p
           initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}

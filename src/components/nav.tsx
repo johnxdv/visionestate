@@ -29,8 +29,8 @@ export function Nav() {
           : "border-transparent bg-transparent",
       )}
     >
-      <nav className="shell flex h-[72px] items-center justify-between gap-4">
-        <Logo />
+      <nav className="shell flex h-[72px] items-center justify-between gap-4 lg:h-[80px]">
+        <Logo imgClassName="h-[38px] w-auto sm:h-[42px] lg:h-[46px]" />
 
         {/* Texte nu : l'état actif se lit à la couleur et au filet. */}
         <ul className="hidden items-center gap-7 lg:flex">

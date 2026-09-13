@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
-import { LogoMark } from "./icons";
 
 /** Pill bordée avec point plein — motif d'accroche répété dans la page. */
 export function Badge({
@@ -90,18 +90,47 @@ export function CtaSecondary({
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+/**
+ * Logo de marque — l'image fournie, telle quelle.
+ *
+ * Le lettrage fait partie de l'asset : sa police et son bleu marine
+ * sont fixes et ne suivent pas la palette du site. Le PNG est détouré
+ * (fond transparent) et servi à plus du triple de sa taille
+ * d'affichage, ce qui le garde net sur écran dense.
+ *
+ * Le lettrage occupe un quart de la hauteur du lockup : « vision
+ * estate » tient la lecture jusqu'à une quarantaine de pixels de haut.
+ * `imgClassName` porte la taille, réglée au point d'usage plutôt qu'en
+ * dur ici.
+ */
+const LOGO_W = 852;
+const LOGO_H = 236;
+
+export function Logo({
+  className,
+  imgClassName = "h-[38px] w-auto",
+}: {
+  className?: string;
+  imgClassName?: string;
+}) {
   return (
-    <a href="#top" className={cn("inline-flex items-center gap-2.5", className)}>
-      <span
-        className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-forest"
-        aria-hidden="true"
-      >
-        <LogoMark className="size-[18px] text-blob" />
-      </span>
-      <span className="whitespace-nowrap font-display text-[1.0625rem] font-extrabold tracking-tight text-ink">
-        Vision Estate
-      </span>
+    <a
+      href="#top"
+      aria-label="Vision Estate — retour en haut de page"
+      className={cn(
+        "inline-flex shrink-0 items-center transition-opacity duration-200 hover:opacity-80",
+        className,
+      )}
+    >
+      <Image
+        src="/logo-vision-estate.png"
+        alt="Vision Estate"
+        width={LOGO_W}
+        height={LOGO_H}
+        priority
+        sizes="180px"
+        className={imgClassName}
+      />
     </a>
   );
 }
