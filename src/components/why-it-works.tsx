@@ -1,7 +1,21 @@
 "use client";
 
-import { useRef, type CSSProperties, type ReactNode } from "react";
-import { motion, useInView, type Variants } from "framer-motion";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import {
+  motion,
+  useInView,
+  useScroll,
+  useTransform,
+  type MotionValue,
+  type Variants,
+} from "framer-motion";
 import { useCountUp, useIsDesktop, usePrefersReducedMotion } from "@/lib/hooks";
 import { EASE, IN_VIEW } from "@/lib/motion";
 import { cn } from "@/lib/cn";
@@ -420,6 +434,142 @@ function DeliveryVisual() {
 }
 
 /* ------------------------------------------------------------------ *
+ * Fil conducteur.
+ *
+ * Les trois blocs ne se succédaient que par leur position dans la page.
+ * Une colonne épaisse les traverse désormais de part en part : elle
+ * naît au centre du premier bloc, meurt au centre du dernier, et
+ * traverse les respirations qui les séparent — c'est là, dans le vide
+ * entre deux blocs, que l'enchaînement se voit.
+ *
+ * Le remplissage est calé sur `["start center", "end center"]` : sa
+ * tête tombe exactement sur le milieu du viewport. Les repères sont
+ * posés à la hauteur *mesurée* du centre de chaque bloc plutôt qu'à un
+ * tiers supposé — les trois maquettes n'ont pas la même hauteur, et
+ * elles changent encore avec la largeur. Tête et repères se croisent
+ * ainsi au bon moment, sans réglage à la main.
+ * ------------------------------------------------------------------ */
+
+/** Repère d'étape : anneau éteint, anneau vert qui s'allume au passage. */
+function ConnectorNode({
+  stop,
+  progress,
+  reduced,
+}: {
+  stop: number;
+  progress: MotionValue<number>;
+  reduced: boolean;
+}) {
+  const lit = useTransform(progress, [stop - 0.025, stop], [0, 1]);
+  const scale = useTransform(progress, [stop - 0.025, stop], [0.66, 1]);
+
+  return (
+    <span
+      className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{ top: `${stop * 100}%` }}
+    >
+      <span className="block size-7 rounded-full border-[5px] border-line bg-page lg:size-10 lg:border-[7px]" />
+      <motion.span
+        style={{ opacity: reduced ? 1 : lit, scale: reduced ? 1 : scale }}
+        className="absolute inset-0 rounded-full border-[5px] border-forest bg-page shadow-[0_0_0_7px_rgba(20,57,42,0.07)] lg:border-[7px]"
+      />
+    </span>
+  );
+}
+
+function ConnectorSpine({
+  containerRef,
+}: {
+  containerRef: RefObject<HTMLDivElement | null>;
+}) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [stops, setStops] = useState<number[]>([]);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"],
+  });
+
+  // Mesure au montage puis à chaque changement de hauteur : le chargement
+  // des polices, une réduction de la fenêtre ou un passage en colonne
+  // unique déplacent le centre des blocs.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const measure = () => {
+      const base = container.getBoundingClientRect();
+      if (base.height === 0) return;
+
+      const rows = container.querySelectorAll<HTMLElement>(
+        "[data-connector-row]",
+      );
+      setStops(
+        Array.from(rows, (row) => {
+          const rect = row.getBoundingClientRect();
+          return (rect.top + rect.height / 2 - base.top) / base.height;
+        }),
+      );
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [containerRef]);
+
+  const first = stops[0] ?? 0;
+  // Borne haute strictement supérieure à la borne basse : une plage
+  // dégénérée renverrait NaN tant que la mesure n'a pas eu lieu.
+  const last = Math.max(stops[stops.length - 1] ?? 1, first + 0.001);
+
+  // Le remplissage est ramené sur la portion réellement tracée (du
+  // premier au dernier repère), pas sur toute la hauteur du conteneur.
+  const fill = useTransform(scrollYProgress, [first, last], [0, 1], {
+    clamp: true,
+  });
+  const headTop = useTransform(fill, [0, 1], ["0%", "100%"]);
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-y-0 left-[13px] w-[7px] -translate-x-1/2 lg:left-1/2 lg:w-[11px]"
+    >
+      <div
+        className="absolute inset-x-0"
+        style={{ top: `${first * 100}%`, bottom: `${(1 - last) * 100}%` }}
+      >
+        {/* Rail éteint — on devine le chemin qui reste. */}
+        <span className="absolute inset-0 rounded-full bg-line" />
+
+        {/* Remplissage. `scaleY` est animé, jamais la hauteur. */}
+        <motion.span
+          style={{ scaleY: prefersReducedMotion ? 1 : fill }}
+          className="absolute inset-0 origin-top rounded-full bg-[linear-gradient(180deg,var(--color-brass),var(--color-forest)_55%,var(--color-forest))]"
+        />
+
+        {/* Tête de tracé : elle marque où en est la lecture. */}
+        {!prefersReducedMotion && (
+          <motion.span
+            style={{ top: headTop }}
+            className="absolute left-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-forest shadow-[0_0_0_7px_rgba(20,57,42,0.12)] lg:size-5"
+          />
+        )}
+
+        {stops.map((stop, index) => (
+          <ConnectorNode
+            key={index}
+            stop={(stop - first) / (last - first)}
+            progress={prefersReducedMotion ? scrollYProgress : fill}
+            reduced={prefersReducedMotion}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Composition du zigzag.
  * ------------------------------------------------------------------ */
 type Block = {
@@ -496,6 +646,7 @@ const visualVariants = (fromLeft: boolean, sideways: boolean): Variants => ({
 
 export function WhyItWorks() {
   const isDesktop = useIsDesktop();
+  const blocksRef = useRef<HTMLDivElement>(null);
 
   return (
     <section id="pourquoi" className="shell scroll-mt-28 py-24 sm:py-32">
@@ -505,14 +656,23 @@ export function WhyItWorks() {
 
       <div className="mt-10 border-t border-line" />
 
-      <div className="mt-14 flex flex-col gap-20 sm:mt-16 sm:gap-28">
+      {/* Le retrait à gauche dégage la place du fil en colonne unique ;
+          à partir de lg le fil passe dans la gouttière centrale de la
+          grille et le retrait n'a plus lieu d'être. */}
+      <div
+        ref={blocksRef}
+        className="relative mt-14 flex flex-col gap-20 pl-11 sm:mt-16 sm:gap-28 lg:pl-0"
+      >
+        <ConnectorSpine containerRef={blocksRef} />
+
         {BLOCKS.map((block, index) => {
           const visualLeft = block.visualSide === "left";
 
           return (
             <div
               key={block.title}
-              className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
+              data-connector-row
+              className="relative grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
             >
               <motion.div
                 variants={visualVariants(visualLeft, isDesktop)}

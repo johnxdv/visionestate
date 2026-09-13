@@ -371,15 +371,23 @@ function ProgressRail({
  * condition pour que `pathLength` produise un tracé plein et régulier.
  * ------------------------------------------------------------------ */
 const THREAD_PATH =
-  "M20 84 C 110 84, 160 42, 250 42 C 340 42, 410 78, 500 78 C 590 78, 660 36, 750 36 C 840 36, 890 70, 980 70";
+  "M24 132 C 120 132, 168 44, 262 44 C 356 44, 424 128, 518 128 C 612 128, 676 38, 770 38 C 864 38, 906 118, 976 118";
 
 const THREAD_NODES = [
-  { x: 20, y: 84 },
-  { x: 250, y: 42 },
-  { x: 500, y: 78 },
-  { x: 750, y: 36 },
-  { x: 980, y: 70 },
+  { x: 24, y: 132 },
+  { x: 262, y: 44 },
+  { x: 518, y: 128 },
+  { x: 770, y: 38 },
+  { x: 976, y: 118 },
 ];
+
+/**
+ * Épaisseur du fil, en unités du viewBox. Le SVG garde ses proportions
+ * et occupe toute la largeur : l'épaisseur rendue suit donc la largeur
+ * de l'écran — de l'ordre de 12 px sur un portable, 18 px sur un grand
+ * écran. C'est le trait qui porte la section, pas un filet.
+ */
+const THREAD_WEIGHT = 12;
 
 function ThreadNode({
   node,
@@ -401,10 +409,10 @@ function ThreadNode({
     <motion.circle
       cx={node.x}
       cy={node.y}
-      r={6}
+      r={13}
       fill="var(--color-page)"
       stroke="var(--color-forest)"
-      strokeWidth={2.5}
+      strokeWidth={5}
       style={{ opacity, scale, transformOrigin: `${node.x}px ${node.y}px` }}
     />
   );
@@ -440,9 +448,9 @@ function ThreadComet({
 
   return (
     <motion.g style={{ x, y }}>
-      <circle r={13} fill="var(--color-forest)" opacity={0.14} />
-      <circle r={7} fill="var(--color-forest)" opacity={0.24} />
-      <circle r={3.4} fill="var(--color-forest)" />
+      <circle r={32} fill="var(--color-forest)" opacity={0.1} />
+      <circle r={19} fill="var(--color-forest)" opacity={0.2} />
+      <circle r={9} fill="var(--color-forest)" />
     </motion.g>
   );
 }
@@ -451,25 +459,51 @@ function Thread({ progress }: { progress: MotionValue<number> }) {
   const pathRef = useRef<SVGPathElement>(null);
 
   return (
+    // Pleine largeur, posé au ras du bas : le fil court d'un bord à
+    // l'autre de la section au lieu de rester dans la colonne de texte.
+    // La largeur est bornée parce que le SVG garde ses proportions —
+    // sans borne, sa hauteur grandirait avec l'écran jusqu'à mordre sur
+    // les compositions.
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-[9vh] mx-auto w-full max-w-[1180px] px-8"
+      className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto w-full max-w-[1800px]"
     >
-      <svg viewBox="0 0 1000 120" className="h-auto w-full overflow-visible">
+      <svg viewBox="0 0 1000 170" className="h-auto w-full overflow-visible">
+        <defs>
+          <linearGradient id="ve-thread" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#A9793D" />
+            <stop offset="55%" stopColor="#1F8A5F" />
+            <stop offset="100%" stopColor="#14392A" />
+          </linearGradient>
+        </defs>
+
         {/* Trace fantôme : on devine le chemin restant à parcourir. */}
         <path
           ref={pathRef}
           d={THREAD_PATH}
           fill="none"
           stroke="var(--color-line)"
-          strokeWidth={2}
+          strokeWidth={THREAD_WEIGHT}
           strokeLinecap="round"
         />
+
+        {/* Halo — un second passage très large et très pâle sous le
+            tracé : le fil pèse sans que la couleur ne s'alourdisse. */}
         <motion.path
           d={THREAD_PATH}
           fill="none"
           stroke="var(--color-forest)"
-          strokeWidth={2.5}
+          strokeWidth={THREAD_WEIGHT * 2.6}
+          strokeLinecap="round"
+          opacity={0.1}
+          style={{ pathLength: progress }}
+        />
+
+        <motion.path
+          d={THREAD_PATH}
+          fill="none"
+          stroke="url(#ve-thread)"
+          strokeWidth={THREAD_WEIGHT}
           strokeLinecap="round"
           style={{ pathLength: progress }}
         />
@@ -561,7 +595,7 @@ function CinematicBeat({
     return (
       <motion.div
         style={{ opacity, y }}
-        className="absolute inset-0 flex flex-col items-center justify-center px-8 pb-[22vh] text-center"
+        className="absolute inset-0 flex flex-col items-center justify-center px-8 pb-[26vh] text-center"
       >
         <motion.p
           style={{ scale: openerZoom }}
@@ -576,7 +610,7 @@ function CinematicBeat({
   return (
     <motion.div
       style={{ opacity, y }}
-      className="absolute inset-0 flex items-center justify-center px-8 pb-[22vh]"
+      className="absolute inset-0 flex items-center justify-center px-8 pb-[26vh]"
     >
       <div
         className={`grid w-full max-w-[1000px] items-center gap-12 lg:grid-cols-2 ${
@@ -671,17 +705,21 @@ function ScrollytellingStacked() {
 
   return (
     <div ref={ref} className="shell py-24 sm:py-28">
-      <div className="relative pl-9">
+      <div className="relative pl-12">
         {/* Fil conducteur vertical : rail clair, remplissage piloté au
-            scroll. `scaleY` est animé, jamais la hauteur. */}
+            scroll. `scaleY` est animé, jamais la hauteur.
+
+            Même épaisseur que le fil de « Pourquoi ça marche » : les
+            deux sections se suivent, leur fil doit se lire comme le
+            même objet d'une section à l'autre. */}
         <span
           aria-hidden="true"
-          className="absolute bottom-2 left-[9px] top-2 w-px bg-line"
+          className="absolute bottom-2 left-[7px] top-2 w-[7px] rounded-full bg-line"
         />
         <motion.span
           aria-hidden="true"
           style={{ scaleY: prefersReducedMotion ? 1 : scrollYProgress }}
-          className="absolute bottom-2 left-[9px] top-2 w-px origin-top bg-forest/60"
+          className="absolute bottom-2 left-[7px] top-2 w-[7px] origin-top rounded-full bg-[linear-gradient(180deg,var(--color-brass),var(--color-forest)_55%,var(--color-forest))]"
         />
 
         <div className="flex flex-col gap-20 sm:gap-24">
@@ -700,9 +738,11 @@ function ScrollytellingStacked() {
                 {/* Repère d'étape, aligné sur le fil */}
                 <span
                   aria-hidden="true"
-                  // -left-8 (32px) et non -left-9 : le repère de 11px se centre
-                  // ainsi exactement sur le rail, posé à left-[9px].
-                  className="absolute -left-8 top-2 size-[11px] rounded-full border-[2.5px] border-forest bg-page"
+                  // Le repère de 21px se centre sur l'axe du rail, à
+                  // 10,5 px du bord du conteneur. Il est posé dans le
+                  // bloc, lui-même en retrait de 48px : -48px ramène son
+                  // bord gauche à 0, donc son centre à 10,5 px.
+                  className="absolute -left-12 top-1 size-[21px] rounded-full border-[5px] border-forest bg-page"
                 />
 
                 <p

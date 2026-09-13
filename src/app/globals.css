@@ -8,6 +8,9 @@
   --color-page: #fafaf8;
   --color-panel: #f3efe4;
   --color-blob: #ede4ce;
+  /* Nappe d'ambiance : plus creusée que --color-blob, qui reste la
+     teinte des surfaces (sélection, survols, dashboard). */
+  --color-blob-deep: #e4d4ae;
   --color-line: #e3dcc9;
   --color-ink: #14171a;
   --color-muted: #5b6058;
@@ -99,6 +102,29 @@
  * Les distances sont exprimées en vw/vh : chaque masse traverse une
  * large fraction de l'écran quelle que soit la taille du viewport. Le
  * conteneur est `fixed inset-0 overflow-hidden` — rien ne déborde.
+ *
+ * Trois points décident de la perception du mouvement, et l'amplitude
+ * n'est que le premier — les deux autres l'annulaient :
+ *
+ * 1. `linear`, et non `ease-in-out`. Une courbe d'accélération entre
+ *    *chaque* station fait ralentir la masse à l'approche de chacune
+ *    puis repartir : sur cinq stations, le trajet passe le plus clair
+ *    de son temps à l'arrêt. À n'importe quel instant, il y avait une
+ *    bonne chance de tomber sur une masse immobile. En linéaire la
+ *    dérive ne s'interrompt jamais — les changements de cap restent
+ *    invisibles sur une forme floutée sans contour.
+ *
+ * 2. Des durées de l'ordre de 20 s, et non de 50 s. Une masse qui met
+ *    dix secondes à franchir la moitié de l'écran avance trop lentement
+ *    pour que l'œil enregistre le déplacement ; il faut la comparer à
+ *    un souvenir. Divisées par deux, les mêmes trajets se lisent dès
+ *    les premières secondes.
+ *
+ * 3. Un bord discernable. Floutée à 80 px, une nappe beige sur fond
+ *    ivoire n'est qu'un dégradé lisse : rien n'y accroche le regard, et
+ *    le déplacement d'un dégradé lisse est par nature imperceptible. Le
+ *    flou descend à 52 px et les teintes se creusent — la masse garde
+ *    une frontière que l'œil peut suivre.
  * ------------------------------------------------------------------ */
 @keyframes blob-drift-a {
   0%,
@@ -160,21 +186,27 @@
 .blob {
   position: absolute;
   border-radius: 9999px;
-  background-color: var(--color-blob);
-  filter: blur(80px);
+  background-color: var(--color-blob-deep);
+  filter: blur(52px);
   will-change: transform;
 }
 
-/* Les trajets couvrent une large fraction de l'écran : les durées sont
-   allongées en proportion pour que la dérive reste lente à l'œil. */
+/* Les décalages négatifs désaccordent les trois départs : aucune
+   pulsation commune, et à l'arrivée sur la page chaque masse est déjà
+   au milieu d'un trajet plutôt qu'à l'arrêt sur sa station de départ.
+
+   Une teinte propre par masse : le fond garde de la profondeur sans
+   virer au décoratif. La plus froide est adossée au vert de marque. */
 .blob-a {
-  animation: blob-drift-a 46s ease-in-out infinite;
+  animation: blob-drift-a 21s linear -6s infinite;
 }
 .blob-b {
-  animation: blob-drift-b 58s ease-in-out -19s infinite;
+  background-color: #dde2d0;
+  animation: blob-drift-b 26s linear -14s infinite;
 }
 .blob-c {
-  animation: blob-drift-c 38s ease-in-out -27s infinite;
+  background-color: #ecdcbc;
+  animation: blob-drift-c 17s linear -9s infinite;
 }
 
 /* Grille de points — présente à qui la cherche, invisible au premier
@@ -267,9 +299,25 @@
  * Surligneur du hero — le trait se dessine de gauche à droite. Le
  * volet est un `clip-path: inset()` animé en CSS : l'interpolation est
  * native, et la courbe dépasse légèrement 1 en fin de course pour que
- * le geste ne s'arrête pas net. `both` garde l'état final — c'est aussi
- * ce qui rend l'effet correct quand `prefers-reduced-motion` réduit la
- * durée à néant.
+ * le geste ne s'arrête pas net.
+ *
+ * Deux états, jamais confondus :
+ *
+ * - `.marker-stroke` seul — le trait est fermé et *aucune animation
+ *   n'est attachée*. C'est l'état d'attente pendant que le titre se
+ *   déplie.
+ * - `.marker-stroke.marker-draw` — React a armé le tracé, une seule
+ *   fois, au moment où le titre s'est posé.
+ *
+ * Cette séparation est la correction du bug : l'animation portait
+ * auparavant un `animation-delay` de 0,62 s et un `fill: both`, posés
+ * dès le montage. Or le `fill` arrière applique la première keyframe
+ * pendant tout le délai — et si le timeline du document n'avance pas à
+ * ce moment-là (onglet ouvert en arrière-plan, page restaurée dans un
+ * onglet masqué, retour arrière sur un onglet non visible), il n'avance
+ * jamais : le trait restait épinglé sur `inset(0 100% 0 0)`, donc
+ * invisible, sans que rien ne vienne l'en sortir. Sans délai et sans
+ * montage prématuré, il n'y a plus de fenêtre où s'épingler.
  * ------------------------------------------------------------------ */
 @keyframes marker-draw {
   from {
@@ -280,9 +328,12 @@
   }
 }
 
-.marker-draw {
-  clip-path: inset(0 0% 0 0);
-  animation: marker-draw 0.54s cubic-bezier(0.34, 1.46, 0.64, 1) 0.62s 1 both;
+.marker-stroke {
+  clip-path: inset(0 100% 0 0);
+}
+
+.marker-stroke.marker-draw {
+  animation: marker-draw 0.54s cubic-bezier(0.34, 1.46, 0.64, 1) 1 both;
 }
 
 @keyframes marker-glow-in {
@@ -296,8 +347,12 @@
   }
 }
 
-.marker-glow {
-  animation: marker-glow-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.7s 1 both;
+.marker-halo {
+  opacity: 0;
+}
+
+.marker-halo.marker-glow {
+  animation: marker-glow-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1 both;
 }
 
 /* ------------------------------------------------------------------ *

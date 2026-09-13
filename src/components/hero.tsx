@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";
 import { usePrefersReducedMotion } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
@@ -68,7 +68,18 @@ function Word({ children, settled }: { children: ReactNode; settled: boolean }) 
  * Le halo brass est posé sous le trait et déborde vers le bas : il
  * chevauche la ligne suivante du titre au lieu de rester confiné au mot.
  * ------------------------------------------------------------------ */
-function MarkerHighlight({ children }: { children: string }) {
+function MarkerHighlight({
+  children,
+  draw,
+}: {
+  children: string;
+  /**
+   * Arme le tracé. Faux tant que le titre se déplie : le trait est
+   * alors fermé, sans animation attachée. Le passage à vrai est
+   * définitif — c'est la garantie que le geste ne se joue qu'une fois.
+   */
+  draw: boolean;
+}) {
   return (
     // `whitespace-nowrap` : le trait est posé sur une boîte unique — le
     // groupe de mots passe à la ligne en entier plutôt qu'en deux
@@ -78,7 +89,10 @@ function MarkerHighlight({ children }: { children: string }) {
           ligne suivante du titre au lieu de rester sur le mot. */}
       <span
         aria-hidden="true"
-        className="marker-glow pointer-events-none absolute -bottom-[1.45em] -left-[0.7em] -right-[0.7em] -top-[0.3em] -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgba(169,121,61,0.42),rgba(169,121,61,0.18)_58%,rgba(169,121,61,0)_82%)] blur-[26px]"
+        className={cn(
+          "marker-halo pointer-events-none absolute -bottom-[1.45em] -left-[0.7em] -right-[0.7em] -top-[0.3em] -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgba(169,121,61,0.42),rgba(169,121,61,0.18)_58%,rgba(169,121,61,0)_82%)] blur-[26px]",
+          draw && "marker-glow",
+        )}
       />
 
       {/* Trait de marqueur — le débordement latéral vient des inserts
@@ -89,7 +103,10 @@ function MarkerHighlight({ children }: { children: string }) {
         // glyphes, la couleur des lettres est le fond du <h1> — peint
         // avant les descendants positionnés. Sans ce recul, le trait
         // recouvrirait les lettres au lieu de passer dessous.
-        className="marker-draw pointer-events-none absolute -bottom-[0.08em] -left-[0.34em] -right-[0.46em] -top-[0.1em] -z-10 -rotate-[1.4deg]"
+        className={cn(
+          "marker-stroke pointer-events-none absolute -bottom-[0.08em] -left-[0.34em] -right-[0.46em] -top-[0.1em] -z-10 -rotate-[1.4deg]",
+          draw && "marker-draw",
+        )}
       >
         <svg
           viewBox="0 0 200 44"
@@ -110,6 +127,13 @@ function MarkerHighlight({ children }: { children: string }) {
   );
 }
 
+/**
+ * Durée de la séquence d'entrée du titre, marge comprise : sept
+ * enfants animés, donc 0,08 s de `delayChildren` puis six crans de
+ * 0,065 s avant que le dernier ne parte pour 0,82 s — soit ~1,29 s.
+ */
+const TITLE_ENTRANCE_FALLBACK_MS = 2200;
+
 export function Hero() {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -118,6 +142,23 @@ export function Hero() {
   // du dégradé découpé sur les glyphes.
   const [hasEntered, setHasEntered] = useState(false);
   const settled = hasEntered || prefersReducedMotion;
+
+  // Filet de sécurité. `onAnimationComplete` ne se déclenche que si la
+  // séquence va jusqu'au bout : une entrée interrompue — onglet masqué
+  // pendant le trajet, remontage en cours de route au retour sur la
+  // page — laisse le rappel en suspens, et le titre reste indéfiniment
+  // dans son état d'avant-pose : pas de dégradé, et surtout pas de
+  // trait de marqueur. Le minuteur, lui, n'a pas besoin que quoi que ce
+  // soit se peigne pour arriver à terme.
+  useEffect(() => {
+    if (hasEntered) return;
+
+    const timer = window.setTimeout(
+      () => setHasEntered(true),
+      TITLE_ENTRANCE_FALLBACK_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [hasEntered]);
 
   return (
     <section id="top" className="relative pt-[7.5rem] sm:pt-[9rem] md:pt-[10.5rem]">
@@ -149,9 +190,18 @@ export function Hero() {
               <Word settled={settled}>une</Word>{" "}
               {/* Pas de volet de découpe ici : il rognerait le trait de
                   marqueur et son halo, qui débordent de la boîte du mot. */}
+              {/* `draw` est calé sur `settled`, et c'est ce qui répare
+                  le surlignage. Les deux branches ci-dessous sont de
+                  types différents (`span` contre `motion.span`) : React
+                  démonte l'une pour monter l'autre, et le trait était
+                  donc reconstruit au moment précis où le titre se
+                  posait. Le trait rejouait alors son animation —
+                  disparition, délai, nouveau tracé — au beau milieu du
+                  geste. En n'armant le tracé que dans la branche posée,
+                  la seule instance animée est la définitive. */}
               {settled ? (
                 <span className="inline-block">
-                  <MarkerHighlight>longueur d’avance</MarkerHighlight>
+                  <MarkerHighlight draw>longueur d’avance</MarkerHighlight>
                 </span>
               ) : (
                 <motion.span
@@ -165,7 +215,7 @@ export function Hero() {
                   }}
                   className="inline-block"
                 >
-                  <MarkerHighlight>longueur d’avance</MarkerHighlight>
+                  <MarkerHighlight draw={false}>longueur d’avance</MarkerHighlight>
                 </motion.span>
               )}
             </span>{" "}
