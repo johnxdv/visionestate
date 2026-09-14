@@ -296,81 +296,87 @@
 }
 
 /* ------------------------------------------------------------------ *
- * Surligneur du hero — le trait se dessine de gauche à droite. Le
- * volet est un `clip-path: inset()` animé en CSS : l'interpolation est
- * native, et la courbe dépasse légèrement 1 en fin de course pour que
- * le geste ne s'arrête pas net.
+ * Surligneur du hero — mots peints en dur.
  *
- * Deux états, jamais confondus :
+ * Le volet du trait et le halo sont désormais animés par Framer Motion
+ * (voir MarkerHighlight dans src/components/hero.tsx) : plus aucune
+ * animation CSS ne décide de leur visibilité, donc plus de keyframe où
+ * rester épinglé.
  *
- * - `.marker-stroke` seul — le trait est fermé et *aucune animation
- *   n'est attachée*. C'est l'état d'attente pendant que le titre se
- *   déplie.
- * - `.marker-stroke.marker-draw` — React a armé le tracé, une seule
- *   fois, au moment où le titre s'est posé.
+ * Reste la cause du mot invisible sur mobile, qui est ici. Le titre
+ * porte `background-clip: text` + `color: transparent` : les lettres
+ * n'ont pas de couleur propre, elles ne sont que le pochoir du fond du
+ * <h1>. Tant que le texte est peint dans la même couche que ce fond,
+ * tout va bien. Le groupe surligné, lui, est un cas à part : ses
+ * voisins immédiats créent des couches (volet `clip-path` du trait,
+ * `filter: blur` du halo, `z-index` négatif), et WebKit mobile ne peint
+ * pas le fond découpé du titre derrière un texte sorti de la couche
+ * d'origine — il ne restait alors que `color: transparent`, c'est-à-dire
+ * deux mots absents.
  *
- * Cause du bug, et sa correction en trois temps. La timeline du
- * document ne tourne pas tant que la page est masquée (onglet
- * d'arrière-plan, page restaurée dans un onglet masqué, fenêtre passée
- * au second plan pendant le chargement). Une animation armée pendant ce
- * gel voit son `startTime` se résoudre mais son `currentTime` rester à
- * 0 : elle est « running », épinglée sur sa première keyframe, et le
- * retour sur la page ne la débloque pas. Avec `inset(0 100% 0 0)` en
- * première keyframe, le trait ne se montrait donc jamais.
- *
- * 1. Ni `animation-delay` ni montage prématuré : la fenêtre d'épinglage
- *    est réduite à la seule durée du geste (corrections précédentes).
- * 2. L'armement attend une frame réellement peinte (`useRenderGate`) :
- *    l'animation n'est plus créée pendant le gel de la timeline.
- * 3. L'état de repos de l'état armé est le trait *posé*, et l'animation
- *    ne remplit rien hors de son intervalle : même épinglée, elle ne
- *    peut laisser derrière elle qu'un trait visible.
+ * `-webkit-text-fill-color` redonne à ces lettres-là une couleur propre.
+ * Leur visibilité ne dépend plus de rien : ni du dégradé, ni d'une
+ * animation, ni du moteur de rendu. Le dégradé continue de traverser le
+ * reste du titre — il ne balayait de toute façon que des tons profonds
+ * pour ne pas délaver ce groupe déjà chaud.
  * ------------------------------------------------------------------ */
-@keyframes marker-draw {
+.marker-ink {
+  color: var(--color-ink);
+  -webkit-text-fill-color: var(--color-ink);
+}
+
+/* ------------------------------------------------------------------ *
+ * Signature de bas de page — la fonte du wordmark en contour. Le
+ * balayage de la brillance, lui, est écrit par Framer sur les bornes du
+ * dégradé (voir footer-wordmark.tsx) : le mouvement porte sur la
+ * lumière, pas sur l'opacité du texte, donc le tracé ne clignote pas.
+ * ------------------------------------------------------------------ */
+.ve-wordmark-text {
+  /* Le corps est posé par le composant : il dépend du nombre de lignes. */
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  paint-order: stroke;
+}
+
+/* Respiration des lettres : le filet s'allège puis revient, décalé
+   d'une lettre à l'autre. L'onde est lente et de faible amplitude —
+   c'est une variation de matière, pas un clignotement. La dernière
+   keyframe est l'état plein : en mouvement réduit, où la durée est
+   ramenée à zéro, les lettres se posent à pleine opacité. */
+@keyframes ve-letter-breathe {
+  0% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.5;
+  }
+  100% {
+    stroke-opacity: 1;
+  }
+}
+
+.ve-letter {
+  animation: ve-letter-breathe 7s ease-in-out infinite;
+}
+
+/* La bande de brillance balaie le mot. La translation porte sur le
+   `<rect>` du masque : un rect est transformable, le dégradé qui le
+   remplit ne l'est pas. Hors animation, la bande reste à gauche du
+   cadre — le mot garde son contour, il perd seulement sa brillance. */
+@keyframes ve-wordmark-sheen {
   from {
-    clip-path: inset(0 100% 0 0);
+    transform: translateX(0);
   }
   to {
-    clip-path: inset(0 0% 0 0);
+    transform: translateX(1450px);
   }
 }
 
-.marker-stroke {
-  clip-path: inset(0 100% 0 0);
+.ve-sheen-band {
+  animation: ve-wordmark-sheen 11s linear infinite;
 }
 
-/* L'état de repos du tracé armé est le trait *posé*, et l'animation ne
-   remplit rien en dehors de son intervalle (`fill: none`). C'est le
-   filet de sécurité de la timeline : si le geste ne peut pas se jouer,
-   le trait s'affiche entier plutôt que de rester fermé. L'armement est
-   lui-même retenu jusqu'à ce que la page soit visible — voir
-   `useRenderGate` dans src/lib/hooks.ts. */
-.marker-stroke.marker-draw {
-  clip-path: inset(0 0 0 0);
-  animation: marker-draw 0.54s cubic-bezier(0.34, 1.46, 0.64, 1) 1;
-}
-
-@keyframes marker-glow-in {
-  from {
-    opacity: 0;
-    transform: scale(0.86);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.marker-halo {
-  opacity: 0;
-}
-
-/* Même filet que pour le trait : le halo armé repose sur `opacity: 1`,
-   l'animation ne fait que l'y amener. */
-.marker-halo.marker-glow {
-  opacity: 1;
-  animation: marker-glow-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 1;
-}
 
 /* ------------------------------------------------------------------ *
  * Dashboard — éclats de vie : brillance qui balaie la carte au

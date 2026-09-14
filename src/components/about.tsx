@@ -8,13 +8,14 @@ import { cn } from "@/lib/cn";
 import { Badge } from "./ui";
 
 /**
- * Mise en scène éditoriale : quatre blocs de tailles et de hauteurs
- * différentes plutôt que quatre cartes identiques.
+ * Mise en scène éditoriale : trois blocs de tailles et de hauteurs
+ * différentes plutôt que trois cartes identiques.
  *
- * En desktop les quatre fondateurs tiennent sur une seule ligne (trois
- * colonnes chacun sur la grille de douze). Les marges hautes font
- * l'escalier d'un bloc à l'autre : c'est ce décalage vertical, et non
- * un changement de rangée, qui évite la grille régulière.
+ * La composition tient sur une seule ligne de la grille de douze
+ * colonnes, mais sans pas régulier : les largeurs de colonnes ne sont
+ * pas égales, une colonne d'air est laissée avant le dernier bloc, et
+ * les marges hautes font l'escalier. C'est ce décalage qui évite la
+ * rangée de vignettes alignées.
  *
  * Les portraits restent bornés en largeur (`media`) plutôt que laissés
  * à la largeur de leur colonne : c'est le texte qui porte la section,
@@ -22,23 +23,18 @@ import { Badge } from "./ui";
  */
 const STAGING = [
   {
-    wrapper: "lg:col-span-3",
-    media: "aspect-[4/5] max-w-[236px]",
+    wrapper: "lg:col-span-4 lg:col-start-1",
+    media: "aspect-[4/5] max-w-[252px]",
     name: "text-[1.45rem]",
   },
   {
-    wrapper: "lg:col-span-3 lg:mt-12",
-    media: "aspect-square max-w-[206px]",
-    name: "text-[1.25rem]",
+    wrapper: "lg:col-span-4 lg:col-start-5 lg:mt-16",
+    media: "aspect-square max-w-[224px]",
+    name: "text-[1.3rem]",
   },
   {
-    wrapper: "lg:col-span-3 lg:mt-4",
-    media: "aspect-[3/4] max-w-[222px]",
-    name: "text-[1.35rem]",
-  },
-  {
-    wrapper: "lg:col-span-3 lg:mt-16",
-    media: "aspect-[4/5] max-w-[198px]",
+    wrapper: "lg:col-span-3 lg:col-start-10 lg:mt-6",
+    media: "aspect-[3/4] max-w-[212px]",
     name: "text-[1.2rem]",
   },
 ];
@@ -102,23 +98,13 @@ export function About() {
                   staging.media,
                 )}
               >
-                {founder.photo ? (
-                  <Image
-                    src={founder.photo}
-                    alt={`Portrait de ${founder.name}`}
-                    fill
-                    className="object-cover"
-                    sizes="236px"
-                  />
-                ) : (
-                  /* PLACEHOLDER — emplacement photo, prêt à recevoir /public */
-                  <span
-                    aria-hidden="true"
-                    className="grid size-full place-items-center font-display text-[clamp(2.5rem,5vw,3.5rem)] font-semibold text-line"
-                  >
-                    {founder.name.charAt(0)}
-                  </span>
-                )}
+                <Image
+                  src={founder.photo}
+                  alt={`Portrait de ${founder.name}`}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 252px, (min-width: 640px) 45vw, 90vw"
+                />
               </div>
 
               <h3

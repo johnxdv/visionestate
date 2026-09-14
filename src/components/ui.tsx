@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 /** Pill bordée avec point plein — motif d'accroche répété dans la page. */
@@ -114,8 +115,11 @@ export function Logo({
   imgClassName?: string;
 }) {
   return (
-    <a
-      href="#top"
+    // `/#top` plutôt que `#top` : sur l'accueil le lien remonte dans la
+    // page, depuis une page légale il ramène à l'accueil. Un fragment
+    // nu n'aurait aucune cible hors accueil.
+    <Link
+      href="/#top"
       aria-label="Vision Estate — retour en haut de page"
       className={cn(
         "inline-flex shrink-0 items-center transition-opacity duration-200 hover:opacity-80",
@@ -131,6 +135,6 @@ export function Logo({
         sizes="180px"
         className={imgClassName}
       />
-    </a>
+    </Link>
   );
 }

@@ -24,6 +24,31 @@ export const NAV_LINKS = [
   { id: "a-propos", label: "À propos" },
 ] as const;
 
+/* -------------------------------------------------------------- *
+ * Pages légales. Le pied de page parcourt cette liste : ajouter une
+ * entrée suffit à publier le lien, l'ordre du tableau est celui de
+ * l'affichage. (Les CGU viendront s'ajouter ici.)
+ * -------------------------------------------------------------- */
+export const LEGAL_LINKS = [
+  { href: "/mentions-legales", label: "Mentions légales" },
+  { href: "/politique-de-confidentialite", label: "Confidentialité" },
+] as const;
+
+/* -------------------------------------------------------------- *
+ * Identité de l'éditeur — reprise telle quelle par les deux pages
+ * légales. Une seule source : un numéro qui change ne se corrige
+ * qu'à un endroit.
+ * -------------------------------------------------------------- */
+export const LEGAL_ENTITY = {
+  name: "MARM Group",
+  status: "Entrepreneur individuel",
+  siret: "940 437 817 00015",
+  siren: "940 437 817",
+  vat: "FR78940437817",
+  address: "43 chemin de la Justice, 92290 Châtenay-Malabry, France",
+  publisher: "MARM Group",
+} as const;
+
 /** Identifiants observés pour l'état actif de la nav (ordre du document). */
 export const NAV_SECTION_IDS = NAV_LINKS.map((l) => l.id);
 
@@ -31,7 +56,7 @@ export const NAV_SECTION_IDS = NAV_LINKS.map((l) => l.id);
  * Les fondateurs. `bio` est découpé en segments plutôt qu'en une
  * chaîne : les sociétés citées sont des liens, et un texte brut ne
  * peut pas les porter. Un segment sans `href` est du texte simple.
- * `photo` : chemin sous /public une fois les visuels fournis.
+ * `photo` : chemin du portrait sous /public.
  * -------------------------------------------------------------- */
 export type BioSegment = {
   text: string;
@@ -45,13 +70,14 @@ export type Founder = {
   name: string;
   role: string;
   bio: readonly BioSegment[];
-  photo?: string;
+  photo: string;
 };
 
 export const FOUNDERS: Founder[] = [
   {
     name: "Benjamin Mossé",
     role: "Fondateur",
+    photo: "/founders/benjamin.jpg",
     bio: [
       { text: "Fondateur de " },
       { text: "red9.fr", href: "https://red9.fr" },
@@ -65,6 +91,7 @@ export const FOUNDERS: Founder[] = [
   {
     name: "Armen Isajanyan",
     role: "Fondateur",
+    photo: "/founders/armen.jpg",
     bio: [
       { text: "Fondateur de " },
       { text: "maileed.com", href: "https://maileed.com" },
@@ -74,18 +101,11 @@ export const FOUNDERS: Founder[] = [
   {
     name: "Victor Nizet",
     role: "Consultant",
+    photo: "/founders/victor.jpg",
     bio: [
       { text: "Fondateur de " },
       { text: "carvi.fr", href: "https://carvi.fr" },
       { text: "." },
-    ],
-  },
-  {
-    name: "Lucas Bella",
-    role: "Consultant",
-    bio: [
-      { text: "Directeur d’agence de " },
-      { text: "immo-via.com", href: "https://immo-via.com" },
     ],
   },
 ];
