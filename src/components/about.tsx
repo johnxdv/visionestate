@@ -24,7 +24,7 @@ import { Badge } from "./ui";
 const STAGING = [
   {
     wrapper: "lg:col-span-4 lg:col-start-1",
-    media: "aspect-[4/5] max-w-[252px]",
+    media: "aspect-[4/5] max-w-[208px]",
     name: "text-[1.45rem]",
   },
   {

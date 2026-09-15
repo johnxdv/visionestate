@@ -4,7 +4,7 @@ import { IconCalendar, IconCheck, IconClock, IconVideo } from "./icons";
 
 const AGENDA = [
   "Nous procédons à un bilan complet de votre situation actuelle.",
-  "On vous montre le funnel et l’estimateur en conditions réelles.",
+  "On vous présente notre funnel d’estimation pensé pour obtenir un maximum de mandats.",
   "On chiffre ce que le système changerait pour votre agence.",
 ];
 

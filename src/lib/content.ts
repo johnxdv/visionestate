@@ -79,9 +79,10 @@ export const FOUNDERS: Founder[] = [
     role: "Fondateur",
     photo: "/founders/benjamin.jpg",
     bio: [
-      { text: "Fondateur de " },
+      { text: "Fondateur du média " },
       { text: "red9.fr", href: "https://red9.fr" },
-      { text: "exhaustpro.fr", href: "https://exhaustpro.fr", br: true },
+      { text: " et de la marque " },
+      { text: "exhaustpro.fr", href: "https://exhaustpro.fr" },
       { text: "Co-fondateur de ", br: true },
       { text: "carvi.fr", href: "https://carvi.fr" },
       { text: "Associé aux comptes de ", br: true },

@@ -5,9 +5,12 @@ import { motion, useScroll, useTransform, type MotionValue } from "framer-motion
 import { usePrefersReducedMotion } from "@/lib/hooks";
 
 const PHRASE =
-  "Le système d’acquisition immobilier le plus évolué du marché européen";
+  "Le système d’acquisition immobilier le plus évolué du marché EUROPÉEN";
 
 const WORDS = PHRASE.split(" ");
+
+/** Le dernier mot porte l'accent : il est capitalisé et animé à part. */
+const EMPHASIS_INDEX = WORDS.length - 1;
 
 function Word({
   word,
@@ -25,6 +28,34 @@ function Word({
 
   return (
     <motion.span style={{ opacity }} className="inline-block">
+      {word}
+    </motion.span>
+  );
+}
+
+/**
+ * Mot d'accent : même remplissage que les autres, plus une légère
+ * poussée d'échelle à la révélation et un reflet doré qui balaie
+ * lentement le mot une fois la phrase complète.
+ */
+function EmphasisWord({
+  word,
+  index,
+  progress,
+}: {
+  word: string;
+  index: number;
+  progress: MotionValue<number>;
+}) {
+  const start = (index / WORDS.length) * 0.82;
+  const opacity = useTransform(progress, [start, start + 0.2], [0.1, 1]);
+  const scale = useTransform(progress, [start, start + 0.26], [0.94, 1]);
+
+  return (
+    <motion.span
+      style={{ opacity, scale }}
+      className="reveal-emphasis inline-block origin-bottom"
+    >
       {word}
     </motion.span>
   );
@@ -48,15 +79,31 @@ export function RevealPhrase() {
           les mots sont de vrais espaces — la phrase se copie et se lit
           correctement à la synthèse vocale. */}
       <p className="mx-auto max-w-[17ch] text-center font-display text-[clamp(2.5rem,7vw,5.4rem)] font-extrabold leading-[1.04] tracking-[-0.035em] text-ink">
-        {WORDS.map((word, index) => (
-          <Fragment key={`${word}-${index}`}>
-            {prefersReducedMotion ? (
-              <span className="inline-block">{word}</span>
-            ) : (
-              <Word word={word} index={index} progress={scrollYProgress} />
-            )}{" "}
-          </Fragment>
-        ))}
+        {WORDS.map((word, index) => {
+          const isEmphasis = index === EMPHASIS_INDEX;
+
+          return (
+            <Fragment key={`${word}-${index}`}>
+              {prefersReducedMotion ? (
+                <span
+                  className={
+                    isEmphasis ? "inline-block text-brass" : "inline-block"
+                  }
+                >
+                  {word}
+                </span>
+              ) : isEmphasis ? (
+                <EmphasisWord
+                  word={word}
+                  index={index}
+                  progress={scrollYProgress}
+                />
+              ) : (
+                <Word word={word} index={index} progress={scrollYProgress} />
+              )}{" "}
+            </Fragment>
+          );
+        })}
       </p>
     </section>
   );
