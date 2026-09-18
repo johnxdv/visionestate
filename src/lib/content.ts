@@ -6,6 +6,16 @@
 export const SITE = {
   name: "Vision Estate",
   contactEmail: "contact@visionestate.fr",
+  /**
+   * Origine publique du site — sert de `metadataBase` : c'est elle qui
+   * transforme les chemins relatifs des balises Open Graph en URL
+   * absolues. Les agrégateurs d'aperçu (iMessage, WhatsApp, Facebook)
+   * refusent les URL relatives : si le domaine change, il se corrige
+   * ici et nulle part ailleurs.
+   */
+  url: "https://visionestate.fr",
+  /** Image d'aperçu au partage — 1200x630, logo sur fond de charte. */
+  ogImage: "/og-vision-estate.png",
   /** Prénom affiché dans l'accueil du dashboard de démonstration. */
   demoFirstName: "Thomas",
   /** Date affichée dans la pill du dashboard. */

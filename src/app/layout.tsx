@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { SITE } from "@/lib/content";
 import "./globals.css";
 
 /**
@@ -24,16 +25,47 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const TITLE =
+  "Vision Estate — Le système d’acquisition des agences immobilières";
+
+const SHARE_DESCRIPTION =
+  "SEO en première position et tunnel de conversion optimisé. Livré en 72h, sur-mesure par agence.";
+
+/**
+ * L'image d'aperçu est déclarée explicitement. Sans elle, les
+ * agrégateurs de lien (iMessage, WhatsApp, Facebook) devinent une
+ * image dans la page — et tombaient sur le premier portrait de la
+ * section « fondateurs ».
+ *
+ * `metadataBase` est indispensable : il préfixe `ogImage` pour en
+ * faire une URL absolue, seule forme acceptée par ces agrégateurs.
+ */
+const OG_IMAGE = {
+  url: SITE.ogImage,
+  width: 1200,
+  height: 630,
+  alt: "Logo Vision Estate",
+};
+
 export const metadata: Metadata = {
-  title: "Vision Estate — Le système d’acquisition des agences immobilières",
+  metadataBase: new URL(SITE.url),
+  title: TITLE,
   description:
     "Un système d’acquisition complet pour votre agence, livré en 72 heures.",
   openGraph: {
-    title: "Vision Estate — Le système d’acquisition des agences immobilières",
-    description:
-      "SEO en première position et tunnel de conversion optimisé. Livré en 72h, sur-mesure par agence.",
+    title: TITLE,
+    description: SHARE_DESCRIPTION,
+    url: SITE.url,
+    siteName: SITE.name,
     locale: "fr_FR",
     type: "website",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: SHARE_DESCRIPTION,
+    images: [OG_IMAGE],
   },
 };
 
