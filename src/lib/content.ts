@@ -20,12 +20,6 @@ export const SITE = {
   demoFirstName: "Thomas",
   /** Date affichée dans la pill du dashboard. */
   demoDate: "12 sept. 2026",
-  /**
-   * Renseigner l'URL Calendly pour remplacer le placeholder de la
-   * section « Réserver » par le vrai calendrier embarqué.
-   * ex. "https://calendly.com/visionestate/demo"
-   */
-  calendlyUrl: "" as string,
 } as const;
 
 export const NAV_LINKS = [
